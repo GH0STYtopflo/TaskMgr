@@ -3,3 +3,9 @@ vendor/
 
 # Jetbrains stuff
 .idea/
+
+# Sandbox file for testing purposes
+sandbox.php
+
+# Config dir contents
+config/*
