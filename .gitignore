@@ -9,3 +9,6 @@ sandbox.php
 
 # Config dir contents
 config/*
+
+# Logs dir
+logs/*

@@ -1,6 +1,8 @@
 <?php
 
 namespace Gh0stytopflo\Taskmgr\Database;
+use Gh0stytopflo\Taskmgr\Exception\DatabaseException;
+use Gh0stytopflo\Taskmgr\Logger\Severity;
 use PDO;
 use PDOException;
 
@@ -16,9 +18,7 @@ class Connection
                 $config->getOptions()
             );
         } catch (PDOException $e) {
-            // TODO: LOG THIS EXCEPTION
-            echo 'Connection error: ' . $e->getMessage();
-            return null;
+            throw new DatabaseException($e->getMessage(), $e->getCode(), Severity::ERROR, $e, __LINE__);
         }
     }
 }

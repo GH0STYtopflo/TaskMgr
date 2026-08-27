@@ -2,6 +2,9 @@
 
 namespace Gh0stytopflo\Taskmgr\Database;
 
+use Gh0stytopflo\Taskmgr\Exception\DatabaseException;
+use Gh0stytopflo\Taskmgr\Logger\Severity;
+use Gh0stytopflo\Taskmgr\Util\TextFormatter;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -31,8 +34,11 @@ class DBHandle
         $pStatement = $this->connection->query($sql);
 
         if (!$pStatement) {
-            // TODO: LOG THIS EXCEPTION
-            throw new PDOException('Query failed: ' . $sql);
+            throw new DatabaseException(
+                "SQL query failed: {$sql}",
+                severity: Severity::WARNING,
+                line: __LINE__
+            );
         } else return $pStatement;
     }
 
@@ -50,13 +56,19 @@ class DBHandle
         $pStatement = $this->connection->prepare($template);
 
         if (!$pStatement) {
-            // TODO: LOG THIS
-            throw new PDOException('PreparedStatement failed: ' . $template);
+            throw new DatabaseException(
+                "SQL prepared statement failed: {$template}",
+                severity: Severity::WARNING,
+                line: __LINE__
+            );
         }
 
         if (!$pStatement->execute($values)) {
-            // TODO: LOG THIS
-            throw new PDOException('PreparedStatement failed: ' . $template);
+            throw new DatabaseException(
+                "SQL prepared statement execution failed: $template" . " <- " . TextFormatter::assocImplode($values),
+                severity: Severity::WARNING,
+                line: __LINE__
+            );
         }
 
         return $pStatement;
@@ -76,8 +88,11 @@ class DBHandle
         $effected = $this->connection->exec($sql);
 
         if (!$effected) {
-            // TODO: LOG THIS
-            throw new PDOException('Exec failed: ' . $sql);
+            throw new DatabaseException(
+                "Exec failed: {$sql}",
+                severity: Severity::WARNING,
+                line: __LINE__
+            );
         } else return $effected;
     }
 }
