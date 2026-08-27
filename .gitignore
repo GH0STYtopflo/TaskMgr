@@ -1,0 +1,5 @@
+# NO BLOAT
+vendor/
+
+# Jetbrains stuff
+.idea/

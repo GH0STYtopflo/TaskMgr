@@ -1,0 +1,17 @@
+{
+    "name": "gh0stytopflo/taskmgr",
+    "description": "A simple task manager app, written in php and compliant with MVC design pattern.",
+    "type": "pr",
+    "autoload": {
+        "psr-4": {
+            "Gh0stytopflo\\Taskmgr\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "GH0STYtopflo"
+        }
+    ],
+    "minimum-stability": "beta",
+    "require": {}
+}
