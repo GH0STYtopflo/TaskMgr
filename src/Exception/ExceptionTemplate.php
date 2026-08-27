@@ -3,6 +3,7 @@
 namespace Gh0stytopflo\Taskmgr\Exception;
 use Gh0stytopflo\Taskmgr\Logger\Severity;
 use RuntimeException;
+use Throwable;
 
 abstract class ExceptionTemplate extends RuntimeException
 {
@@ -20,5 +21,10 @@ abstract class ExceptionTemplate extends RuntimeException
 
         $this->severity = $severity;
         $this->line = $line;
+    }
+
+    public function getSeverity(): Severity
+    {
+        return $this->severity;
     }
 }
