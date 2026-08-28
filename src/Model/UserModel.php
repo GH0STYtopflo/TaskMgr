@@ -3,6 +3,7 @@
 namespace Gh0stytopflo\Taskmgr\Model;
 
 use Gh0stytopflo\Taskmgr\Database\DBHandle;
+use Gh0stytopflo\Taskmgr\Util\PasswordEncoder;
 
 class UserModel extends Model
 {
@@ -14,6 +15,9 @@ class UserModel extends Model
     public function insert(array $data): void
     {
         $template = "INSERT INTO users (username, password_hash, is_admin) VALUES (:username, :password_hash, :is_admin)";
+
+        // encode user password to prevent storing plain_text
+        $data["password_hash"] = PasswordEncoder::encode($data["password_hash"]);
 
         $this->handle->preparedStatement($template, $data);
     }
