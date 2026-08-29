@@ -1,7 +1,10 @@
 <?php
 
 namespace ghosty\taskmgr\exceptions;
+use DateTimeImmutable;
+use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\logger\Severity;
+use ghosty\taskmgr\util\HTTP\Headers;
 use RuntimeException;
 use Throwable;
 
@@ -26,5 +29,15 @@ abstract class ExceptionTemplate extends RuntimeException
     public function getSeverity(): Severity
     {
         return $this->severity;
+    }
+
+    public function createErrResponse(): Response
+    {
+        return new Response([Headers::TYPE_JSON], $this->code,
+            json_encode(
+                ['error' => $this->message,
+                'code' => $this->code,
+                'datetime' => new DateTimeImmutable(timezone: 'Asia/Tehran')->format(DATE_ATOM)]) // returns now() implicitly
+        );
     }
 }

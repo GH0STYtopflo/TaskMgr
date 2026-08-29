@@ -4,6 +4,7 @@ namespace ghosty\taskmgr\dto\task;
 
 use ghosty\taskmgr\database\custom_types\TaskStatus;
 use ghosty\taskmgr\dto\DTO;
+use ghosty\taskmgr\exceptions\TypeMismatchException;
 
 class UpdateTaskStatusDTO extends DTO
 {
@@ -25,12 +26,23 @@ class UpdateTaskStatusDTO extends DTO
     {
         try {
             $status = TaskStatus::from($data['status']);
-        } catch (\Exception $e) {
-            // TODO: THROW BETTER EXCEPTION
+        } catch (\ValueError $e) {
+            throw new TypeMismatchException(
+                'status',
+                "string(" . $data['status'] . ")",
+                'TaskStatus',
+                $e,
+                __LINE__
+            );
         }
 
         if (!is_numeric($data['id'])) {
-            // TODO: THROW EXCEPTION
+            throw new TypeMismatchException(
+                'id',
+                "string(" . $data['status'] . ")",
+                'int',
+                line: __LINE__
+            );
         }
 
         return new self($data['id'] , $status);
@@ -42,5 +54,15 @@ class UpdateTaskStatusDTO extends DTO
         $array['status'] = $array['status']->getValue();
 
         return $array;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getStatus(): TaskStatus
+    {
+        return $this->status;
     }
 }

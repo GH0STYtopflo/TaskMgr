@@ -4,6 +4,8 @@ namespace ghosty\taskmgr\dto\task;
 
 use DateTimeImmutable;
 use ghosty\taskmgr\dto\DTO;
+use ghosty\taskmgr\exceptions\MalformedDateException;
+use ghosty\taskmgr\exceptions\TypeMismatchException;
 
 class UpdateTaskDTO extends DTO
 {
@@ -46,10 +48,14 @@ class UpdateTaskDTO extends DTO
             $data['deadline'] = null;
         }
 
+        if (!is_numeric($data['priority'])) {
+            throw new TypeMismatchException('priority', "string(" . $data['priority'] . ")", 'int'  ,line: __LINE__);
+        }
+
         try {
             $deadline = new DateTimeImmutable($data['deadline']);
         } catch (\DateMalformedStringException $e) {
-            // TODO: HANDLE THIS (IDK HOW YET)
+            throw new MalformedDateException($data['deadline'], $e, __LINE__);
         }
 
         return new self($data['title'], $data['desc'], $data['priority'], $deadline);

@@ -6,6 +6,9 @@ use DateTimeImmutable;
 use Exception;
 use ghosty\taskmgr\database\custom_types\TaskStatus;
 use ghosty\taskmgr\dto\DTO;
+use ghosty\taskmgr\exceptions\MalformedDateException;
+use ghosty\taskmgr\exceptions\MissingParamException;
+use ghosty\taskmgr\logger\Severity;
 
 class CreateTaskDTO extends DTO
 {
@@ -31,29 +34,29 @@ class CreateTaskDTO extends DTO
     public static function fromArray(array $data): DTO
     {
         if (!array_key_exists('title', $data)) {
-            // TODO: THRoW exception
+            throw new MissingParamException('title', line: __LINE__);
         }
 
         if (!array_key_exists('desc', $data)) {
-            // TODO: THRoW exception
+            throw new MissingParamException('desc', line: __LINE__);
         }
 
         if (!array_key_exists('priority', $data)) {
-            // TODO: THRoW exception
+            throw new MissingParamException('priority', line: __LINE__);
         }
 
         if (!array_key_exists('deadline', $data)) {
-            // TODO: THRoW exception
+            throw new MissingParamException('deadline', line: __LINE__);
         }
 
         if (!array_key_exists('status', $data)) {
-            // TODO: THRoW exception
+            throw new MissingParamException('status', line: __LINE__);
         }
 
         try {
             $deadline = new DateTimeImmutable($data['deadline']);
         } catch (\DateMalformedStringException $e) {
-            // TODO: HANDLE THIS (IDK HOW YET)
+            throw new MalformedDateException($data['deadline'], line: __LINE__);
         }
 
         return new self($data['title'], $data['desc'], $data['priority'], $deadline);

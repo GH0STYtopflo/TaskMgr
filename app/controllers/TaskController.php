@@ -6,7 +6,13 @@ use Exception;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\dto\task\AssignAndDischargeTaskDTO;
 use ghosty\taskmgr\dto\task\CreateTaskDTO;
+use ghosty\taskmgr\dto\task\TaskDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskDTO;
+use ghosty\taskmgr\exceptions\DatabaseException;
+use ghosty\taskmgr\exceptions\ExceptionTemplate;
+use ghosty\taskmgr\exceptions\MalformedDateException;
+use ghosty\taskmgr\exceptions\MissingParamException;
+use ghosty\taskmgr\exceptions\TypeMismatchException;
 use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\util\HTTP\Headers;
 use ghosty\taskmgr\models\UserModel;
@@ -26,14 +32,14 @@ class TaskController extends Controller
     {
         try {
             $dto = CreateTaskDTO::fromArray($taskData);
-        } catch (\Exception) {
-            //TODO: LOG AND HANDLE RESPONSE
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
         }
 
         try {
             $this->taskModel->insert($dto->toArray());
-        } catch (\Exception) {
-            //TODO: LOG AND HANDLE RESPONSE
+        } catch (DatabaseException $e) {
+            return $e->createErrResponse();
         }
 
         return new Response([Headers::TYPE_JSON], 200);
@@ -41,77 +47,92 @@ class TaskController extends Controller
 
     public function deleteTask(int $taskId): Response
     {
-        $task = $this->taskModel->findById($taskId);
-
-        if (is_null($task)) {
-            return new Response([Headers::TYPE_JSON], 404, null);
-        } else {
+        try {
             $this->taskModel->delete($taskId);
-            return new Response([Headers::TYPE_JSON], 204, null);
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
         }
+
+        return new Response([Headers::TYPE_JSON], 200);
     }
 
     public function getTaskById(int $taskId): Response
     {
-        $task = $this->taskModel->findById($taskId);
-
-        if (is_null($task)) {
-            return new Response([Headers::TYPE_JSON], 404, null);
-        } else {
-            return new Response([Headers::TYPE_JSON], 200, json_encode($task));
+        try {
+            $task = $this->taskModel->findById($taskId);
+        } catch (DatabaseException $e) {
+            return $e->createErrResponse();
         }
+
+        return new Response([Headers::TYPE_JSON], 200, is_null($task) ? null : json_encode(TaskDTO::fromArray($task)));
     }
 
     public function getAllTasks(): Response
     {
-        $tasks = $this->taskModel->findAll();
+        try {
+            $tasks = $this->taskModel->findAll();
+        } catch (DatabaseException $e) {
+            return $e->createErrResponse();
+        }
+
+        foreach ($tasks as &$task) {
+            $task = TaskDTO::fromArray($task);
+        }
 
         return new Response([Headers::TYPE_JSON], 200, json_encode($tasks));
     }
 
     public function updateTask(int $taskId, array $taskData): Response
     {
-        $task = $this->taskModel->findById($taskId);
-
-        if (is_null($task)) {
-            return new Response([Headers::TYPE_JSON], 404, null);
+        try {
+            $dto = UpdateTaskDTO::fromArray($taskData);
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
         }
 
         try {
-            $dto = UpdateTaskDTO::fromArray($taskData);
-        } catch (Exception) {
-            return new Response([Headers::TYPE_JSON], 400, null);
+            $this->taskModel->update($taskId, $dto->toArray());
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
         }
 
-        $this->taskModel->update($taskId, $dto->toArray());
-        return new Response([Headers::TYPE_JSON], 204, null);
+        return new Response([Headers::TYPE_JSON], 200);
     }
 
     public function searchTasksByTitle(string $title): Response
     {
-        $tasks = $this->taskModel->search(['title' => $title]);
+        try {
+            $tasks = $this->taskModel->search(['title' => $title]);
+        } catch (DatabaseException $e) {
+            return $e->createErrResponse();
+        }
 
-        return new Response([Headers::TYPE_JSON], 200, json_encode($tasks));
+        return new Response([Headers::TYPE_JSON], 200, json_encode(TaskDTO::fromArray($tasks)));
     }
 
     public function assignTaskToUser(array $data): Response
     {
         try {
             $dto = AssignAndDischargeTaskDTO::fromArray($data);
-        } catch (Exception) {
-            return new Response([Headers::TYPE_JSON], 400, null);
+        } catch (ExceptionTemplate $e) {
+            $e->createErrResponse();
         }
 
-        $this->taskModel->assignTaskToUser($dto);
-        return new Response([Headers::TYPE_JSON], 200, null);
+        try {
+            $this->taskModel->assignTaskToUser($dto);
+        } catch (DatabaseException $e) {
+            return $e->createErrResponse();
+        }
+
+        return new Response([Headers::TYPE_JSON], 200);
     }
 
     public function dischargeTaskFromUser(array $data): Response
     {
         try {
             $dto = AssignAndDischargeTaskDTO::fromArray($data);
-        } catch (Exception) {
-            return new Response([Headers::TYPE_JSON], 400, null);
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
         }
 
         $this->taskModel->dischargeUserFromTask($dto);
@@ -122,14 +143,16 @@ class TaskController extends Controller
     {
         try {
             $dto = UpdateTaskDTO::fromArray($data);
-        } catch (Exception) {
-            // TODO: THROW EXCEPTION
+        } catch (TypeMismatchException $e) {
+            $e->createErrResponse();
         }
 
         try {
             $this->taskModel->updateTaskStatus($dto->toArray());
-        } catch (Exception) {
-            return new Response([Headers::TYPE_JSON], 400, null);
+        } catch (DatabaseException $e) {
+            return $e->createErrResponse();
         }
+
+        return new Response([Headers::TYPE_JSON], 200);
     }
 }

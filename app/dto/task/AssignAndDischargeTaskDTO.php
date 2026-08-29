@@ -3,6 +3,8 @@
 namespace ghosty\taskmgr\dto\task;
 
 use ghosty\taskmgr\dto\DTO;
+use ghosty\taskmgr\exceptions\MissingParamException;
+use ghosty\taskmgr\exceptions\TypeMismatchException;
 
 class AssignAndDischargeTaskDTO extends DTO
 {
@@ -23,11 +25,19 @@ class AssignAndDischargeTaskDTO extends DTO
     public static function fromArray(array $data): DTO
     {
         if (!isset($data['user_id'])) {
-            // TODO: THROW EXCEPTION
+            throw new MissingParamException('user_id', line: __LINE__);
         }
 
         if (!isset($data['task_id'])) {
-            // TODO: THROW EXCEPTION
+            throw new MissingParamException('task_id', line: __LINE__);
+        }
+
+        if (!is_numeric($data['user_id'])) {
+            throw new TypeMismatchException('user_id', "string(" . $data['user_id'] . ")", 'int'  ,line: __LINE__);
+        }
+
+        if (!is_numeric($data['task_id'])) {
+            throw new TypeMismatchException('task_id', "string(" . $data['task_id'] . ")", 'int'  ,line: __LINE__);
         }
 
         return new self((int) $data['user_id'], (int) $data['task_id']);
