@@ -1,7 +1,7 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Exception;
-use Gh0stytopflo\Taskmgr\Logger\Severity;
+namespace ghosty\taskmgr\exceptions;
+use ghosty\taskmgr\logger\Severity;
 use RuntimeException;
 use Throwable;
 

@@ -41,18 +41,18 @@ CREATE TABLE IF NOT EXISTS sub_tasks (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     title VARCHAR(255) NOT NULL,
     is_done BOOLEAN NOT NULL DEFAULT FALSE,
-    task_id BIGINT REFERENCES tasks(id)
+    task_id BIGINT REFERENCES tasks(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS user_tasks (
     user_id BIGINT REFERENCES users(id),
-    task_id BIGINT REFERENCES tasks(id),
+    task_id BIGINT REFERENCES tasks(id) ON DELETE CASCADE,
 
     CONSTRAINT pk_user_tasks PRIMARY KEY (task_id, user_id)
 );
 
 CREATE TABLE IF NOT EXISTS task_categories (
-    task_id BIGINT REFERENCES tasks(id),
+    task_id BIGINT REFERENCES tasks(id) ON DELETE CASCADE,
     category_id BIGINT REFERENCES categories(id),
 
     CONSTRAINT pk_task_categories PRIMARY KEY (task_id, category_id)

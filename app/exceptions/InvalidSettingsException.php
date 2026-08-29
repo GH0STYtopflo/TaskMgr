@@ -1,8 +1,8 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Exception;
+namespace ghosty\taskmgr\exceptions;
 
-use Gh0stytopflo\Taskmgr\Logger\Severity;
+use ghosty\taskmgr\logger\Severity;
 use Throwable;
 
 class InvalidSettingsException extends ExceptionTemplate

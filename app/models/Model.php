@@ -1,9 +1,9 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Model;
+namespace ghosty\taskmgr\models;
 
 
-use Gh0stytopflo\Taskmgr\Database\DBHandle;
+use ghosty\taskmgr\database\DBHandle;
 
 abstract class Model
 {
@@ -14,7 +14,7 @@ abstract class Model
         $this->handle = $handle;
     }
 
-    abstract protected function insert(array $data): void;
+    abstract protected function insert(array $data);
 
     abstract protected function findById(int $id): ?array;
 

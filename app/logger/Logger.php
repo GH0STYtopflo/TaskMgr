@@ -1,8 +1,7 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Logger;
-use Exception;
-use Gh0stytopflo\Taskmgr\Exception\ExceptionTemplate;
+namespace ghosty\taskmgr\logger;
+use ghosty\taskmgr\exceptions\ExceptionTemplate;
 
 class Logger
 {

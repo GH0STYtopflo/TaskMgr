@@ -1,8 +1,8 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Model;
+namespace ghosty\taskmgr\models;
 
-use Gh0stytopflo\Taskmgr\Database\DBHandle;
+use ghosty\taskmgr\database\DBHandle;
 
 class SubTaskModel extends Model
 {

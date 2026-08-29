@@ -1,8 +1,9 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Database;
-use Gh0stytopflo\Taskmgr\Exception\DatabaseException;
-use Gh0stytopflo\Taskmgr\Logger\Severity;
+namespace ghosty\taskmgr\database;
+
+use ghosty\taskmgr\exceptions\DatabaseException;
+use ghosty\taskmgr\logger\Severity;
 use PDO;
 use PDOException;
 

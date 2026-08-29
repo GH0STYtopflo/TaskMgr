@@ -1,6 +1,6 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Util;
+namespace ghosty\taskmgr\util;
 
 class TextFormatter
 {

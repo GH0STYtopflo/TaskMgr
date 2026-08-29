@@ -1,12 +1,11 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Database;
+namespace ghosty\taskmgr\database;
 
-use Gh0stytopflo\Taskmgr\Exception\DatabaseException;
-use Gh0stytopflo\Taskmgr\Logger\Severity;
-use Gh0stytopflo\Taskmgr\Util\TextFormatter;
+use ghosty\taskmgr\exceptions\DatabaseException;
+use ghosty\taskmgr\logger\Severity;
+use ghosty\taskmgr\util\TextFormatter;
 use PDO;
-use PDOException;
 use PDOStatement;
 
 class DBHandle

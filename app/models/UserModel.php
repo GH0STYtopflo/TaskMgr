@@ -1,9 +1,9 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Model;
+namespace ghosty\taskmgr\models;
 
-use Gh0stytopflo\Taskmgr\Database\DBHandle;
-use Gh0stytopflo\Taskmgr\Util\PasswordEncoder;
+use ghosty\taskmgr\database\DBHandle;
+use ghosty\taskmgr\util\PasswordEncoder;
 
 class UserModel extends Model
 {

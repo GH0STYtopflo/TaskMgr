@@ -1,12 +1,11 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Database;
+namespace ghosty\taskmgr\database;
 
 use Exception;
-use Gh0stytopflo\Taskmgr\Exception\InvalidSettingsException;
+use ghosty\taskmgr\exceptions\InvalidSettingsException;
 use JsonSerializable;
 use PDO;
-use Reflection;
 use ReflectionClass;
 
 class DBConfig implements JsonSerializable

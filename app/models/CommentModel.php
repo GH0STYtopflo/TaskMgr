@@ -1,9 +1,8 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Model;
+namespace ghosty\taskmgr\models;
 
-use Gh0stytopflo\Taskmgr\Database\DBHandle;
-use Gh0stytopflo\Taskmgr\Model\Model;
+use ghosty\taskmgr\database\DBHandle;
 
 class CommentModel extends Model
 {

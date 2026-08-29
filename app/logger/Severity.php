@@ -1,6 +1,6 @@
 <?php
 
-namespace Gh0stytopflo\Taskmgr\Logger;
+namespace ghosty\taskmgr\logger;
 enum Severity
 {
     case ERROR;

@@ -4,7 +4,7 @@
     "type": "pr",
     "autoload": {
         "psr-4": {
-            "Gh0stytopflo\\Taskmgr\\": "src/"
+            "ghosty\\taskmgr\\": "app/"
         }
     },
     "authors": [
