@@ -178,7 +178,7 @@ class TaskModel extends Model
     {
         try {
             return $this->handle->preparedStatement(
-                "SELECT * FROM tasks JOIN user_tasks ON tasks.id = user_tasks.task_id WHERE public.user_tasks.user_id = :user_id",
+                "SELECT tasks.* FROM tasks JOIN user_tasks ON tasks.id = user_tasks.task_id WHERE public.user_tasks.user_id = :user_id",
                 $data->toArray()
             )->fetchAll();
         } catch (PDOException $e) {
