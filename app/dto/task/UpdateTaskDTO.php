@@ -5,10 +5,12 @@ namespace ghosty\taskmgr\dto\task;
 use DateTimeImmutable;
 use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\exceptions\MalformedDateException;
+use ghosty\taskmgr\exceptions\MissingParamException;
 use ghosty\taskmgr\exceptions\TypeMismatchException;
 
 class UpdateTaskDTO extends DTO
 {
+    private int $id;
     private ?string $title;
     private ?string $desc;
     private ?int $priority;
@@ -16,13 +18,15 @@ class UpdateTaskDTO extends DTO
     private DateTimeImmutable $deadline;
 
     /**
+     * @param int $id
      * @param string|null $title
      * @param string|null $desc
      * @param int|null $priority
      * @param DateTimeImmutable|null $deadline
      */
-    public function __construct(?string $title, ?string $desc, ?int $priority, ?DateTimeImmutable $deadline)
+    public function __construct(int $id, ?string $title, ?string $desc, ?int $priority, ?DateTimeImmutable $deadline)
     {
+        $this->id = $id;
         $this->title = $title;
         $this->desc = $desc;
         $this->priority = $priority;
@@ -32,6 +36,19 @@ class UpdateTaskDTO extends DTO
 
     public static function fromArray(array $data): DTO
     {
+        if (!isset($data["id"])) {
+            throw new MissingParamException('id', line: __LINE__);
+        }
+
+        if (!is_numeric($data["id"])) {
+            throw new TypeMismatchException(
+                'id',
+                'string(' . $data["id"] . ')',
+                'int',
+                null, line: __LINE__
+            );
+        }
+
         if (!isset($data['title'])) {
             $data['title'] = null;
         }
@@ -49,7 +66,7 @@ class UpdateTaskDTO extends DTO
         }
 
         if (!is_numeric($data['priority'])) {
-            throw new TypeMismatchException('priority', "string(" . $data['priority'] . ")", 'int'  ,line: __LINE__);
+            throw new TypeMismatchException('priority', "string(" . $data['priority'] . ")", 'int', line: __LINE__);
         }
 
         try {
@@ -58,7 +75,7 @@ class UpdateTaskDTO extends DTO
             throw new MalformedDateException($data['deadline'], $e, __LINE__);
         }
 
-        return new self($data['title'], $data['desc'], $data['priority'], $deadline);
+        return new self((int) $data['id'], $data['title'], $data['desc'], $data['priority'], $deadline);
     }
 
     public function toArray(): array
@@ -67,6 +84,11 @@ class UpdateTaskDTO extends DTO
         $array['deadline'] = $this->deadline->format(DATE_ATOM);
 
         return $array;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
     }
 
     public function getTitle(): ?string

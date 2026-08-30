@@ -6,8 +6,10 @@ use Exception;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\dto\task\AssignAndDischargeTaskDTO;
 use ghosty\taskmgr\dto\task\CreateTaskDTO;
+use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
 use ghosty\taskmgr\dto\task\TaskDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskDTO;
+use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
 use ghosty\taskmgr\exceptions\MalformedDateException;
@@ -37,7 +39,7 @@ class TaskController
         }
 
         try {
-            $this->taskModel->insert($dto->toArray());
+            $this->taskModel->insert($dto);
         } catch (DatabaseException $e) {
             return $e->createErrResponse();
         }
@@ -48,7 +50,13 @@ class TaskController
     public function deleteTask(int $taskId): Response
     {
         try {
-            $this->taskModel->delete($taskId);
+            $dto = FindTaskByIdDTO::fromArray(['id' => $taskId]);
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
+        try {
+            $this->taskModel->delete($dto);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -59,7 +67,13 @@ class TaskController
     public function getTaskById(int $taskId): Response
     {
         try {
-            $task = $this->taskModel->findById($taskId);
+            $dto = FindTaskByIdDTO::fromArray(['id' => $taskId]);
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
+        try {
+            $task = $this->taskModel->findById($dto);
         } catch (DatabaseException $e) {
             return $e->createErrResponse();
         }
@@ -85,7 +99,7 @@ class TaskController
     public function updateTask(int $taskId, array $taskData): Response
     {
         try {
-            $dto = UpdateTaskDTO::fromArray($taskData);
+            $dto = UpdateTaskDTO::fromArray($taskData + ['id' => $taskId]);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -99,10 +113,10 @@ class TaskController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
-    public function searchTasksByTitle(string $title): Response
+    public function searchTasksByTitle(array $data): Response
     {
         try {
-            $tasks = $this->taskModel->search(['title' => $title]);
+            $tasks = $this->taskModel->search($data);
         } catch (DatabaseException $e) {
             return $e->createErrResponse();
         }
@@ -122,6 +136,16 @@ class TaskController
             $e->createErrResponse();
         }
 
+        // Cross-Model logic must be handled in controller
+        if ($this->taskModel->existsById($dto->getTaskId())) {
+            throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
+        }
+
+        if ($this->userModel->existsById($dto->getUserId())) {
+            throw new AccessingNonExistentRecordException($dto->getUserId(), 'users', line: __LINE__);
+        }
+        //----------------------------------------------------
+
         try {
             $this->taskModel->assignTaskToUser($dto);
         } catch (DatabaseException $e) {
@@ -139,6 +163,16 @@ class TaskController
             return $e->createErrResponse();
         }
 
+        // Cross-Model logic must be handled in controller
+        if ($this->taskModel->existsById($dto->getTaskId())) {
+            throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
+        }
+
+        if ($this->userModel->existsById($dto->getUserId())) {
+            throw new AccessingNonExistentRecordException($dto->getUserId(), 'users', line: __LINE__);
+        }
+        //----------------------------------------------------
+
         $this->taskModel->dischargeUserFromTask($dto);
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
@@ -152,7 +186,7 @@ class TaskController
         }
 
         try {
-            $this->taskModel->updateTaskStatus($dto->toArray());
+            $this->taskModel->updateTaskStatus($dto);
         } catch (DatabaseException $e) {
             return $e->createErrResponse();
         }
