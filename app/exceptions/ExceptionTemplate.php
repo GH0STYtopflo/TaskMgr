@@ -38,8 +38,9 @@ abstract class ExceptionTemplate extends RuntimeException
             $this->getCode(),
             [Headers::TYPE_JSON],
             [
-                'error' => $this->getMessage(),
+                'error' => $this::class,
                 'code' => $this->getCode(),
+                'msg' => $this->getMessage(),
                 'timestamp' => new DateTimeImmutable('now', new DateTimeZone('Asia/Tehran'))->format(DATE_ATOM)
             ]
         );

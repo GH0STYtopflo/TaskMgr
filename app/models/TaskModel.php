@@ -177,6 +177,30 @@ class TaskModel extends Model
         }
     }
 
+    public function addTaskCategory(DTO $data): void
+    {
+        try {
+            $this->handle->preparedStatement(
+                "INSERT INTO task_categories (task_id, category_id) VALUES (:task_id, :category_id)",
+                $data->toArray()
+            );
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
+    }
+
+    public function removeTaskCategory(DTO $data): void
+    {
+        try {
+            $this->handle->preparedStatement(
+                "DELETE FROM task_categories WHERE task_categories.task_id = :task_id AND category_id = :category_id",
+                $data->toArray()
+            );
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
+    }
+
     public function existsById(int $id): bool
     {
         try {

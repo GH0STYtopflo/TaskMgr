@@ -5,7 +5,6 @@ CREATE TYPE STATUS AS ENUM (
 );
 
 
-
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     username VARCHAR(255) NOT NULL UNIQUE,
@@ -26,7 +25,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 
 CREATE TABLE IF NOT EXISTS categories (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    title VARCHAR(255) NOT NULL
+    title VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS comments (
@@ -68,3 +67,5 @@ CREATE INDEX idx_sub_tasks_task_id ON sub_tasks(task_id);
 
 CREATE INDEX idx_comments_user_id ON users(id);
 CREATE INDEX idx_comments_task_id ON tasks(id);
+
+CREATE INDEX idx_categories_title ON categories(title);

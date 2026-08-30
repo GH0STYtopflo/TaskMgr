@@ -1,6 +1,8 @@
 <?php
 
 namespace ghosty\taskmgr\dto;
+use DateTimeImmutable;
+use DateTimeZone;
 use JsonSerializable;
 
 /**
@@ -30,7 +32,10 @@ class Response
      */
     public static function makeResponse(int $status, array $headers, null | JsonSerializable | array $obj = null): Response
     {
-        return new Response($headers, $status, is_null($obj) ? null : json_encode($obj));
+        return new Response(
+            $headers + ['timestamp' => new DateTimeImmutable('now',
+                new DateTimeZone('Asia/Tehran'))->format(DATE_ATOM)],
+            $status, is_null($obj) ? null : json_encode($obj));
     }
 
     public function getHeaders(): array

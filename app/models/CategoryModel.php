@@ -3,6 +3,12 @@
 namespace ghosty\taskmgr\models;
 
 use ghosty\taskmgr\database\DBHandle;
+use ghosty\taskmgr\dto\DTO;
+use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\exceptions\CategoryExistsException;
+use ghosty\taskmgr\exceptions\DatabaseException;
+use ghosty\taskmgr\logger\Severity;
+use PDOException;
 
 class CategoryModel extends Model
 {
@@ -11,48 +17,166 @@ class CategoryModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(array $data): void
+    public function insert(DTO $data): void
     {
-        $this->handle->preparedStatement(
-            "INSERT INTO categories (title) VALUES (:title)",
-            $data
-        );
+        if ($this->existsById($data->getTitle())) {
+            throw new CategoryExistsException(
+                $data->getTitle(),
+                line: __LINE__,
+            );
+        }
+
+        try {
+            $this->handle->preparedStatement(
+                "INSERT INTO categories (title) VALUES (:title)",
+                $data->toArray()
+            );
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
-    public function findById(int $id): ?array
+    public function findById(DTO $data): ?array
     {
-        return $this->handle->preparedStatement(
-            "SELECT * FROM categories WHERE id = :id",
-            ["id" => $id]
-        )->fetch();
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT * FROM categories WHERE id = :id",
+                $data->toArray()
+            )->fetch();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
     public function findAll(): array
     {
-        return $this->handle->query("SELECT * FROM categories")->fetchAll();
+        try {
+            return $this->handle->query("SELECT * FROM categories")->fetchAll();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
-    public function update(float $id, array $data): void
+    public function update(DTO $data): void
     {
-        $this->handle->preparedStatement(
-            "UPDATE categories SET title = COALESCE(:title, title) WHERE id = :id",
-            $data + ['id' => $id]
-        );
+        if ($this->existsByTitle($data->getTitle())) {
+            throw new CategoryExistsException(
+                $data->getTitle(),
+                line: __LINE__
+            );
+        }
+
+        try {
+            $this->handle->preparedStatement(
+                "UPDATE categories SET title = COALESCE(:new_title, title) WHERE id = :id",
+                $data->toArray()
+            );
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                line: __LINE__
+            );
+        }
     }
 
-    public function delete(int $id): void
+    public function delete(DTO $data): void
     {
-        $this->handle->preparedStatement(
-            "DELETE FROM categories WHERE id = :id",
-            ["id" => $id]
-        );
+        if (!$this->existsById($data->getId())) {
+            throw new AccessingNonExistentRecordException(
+                $data->getId(),
+                'categories',
+                line: __LINE__
+            );
+        }
+
+        try {
+            $this->handle->preparedStatement(
+                "DELETE FROM categories WHERE id = :id",
+                $data->toArray()
+            );
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
-    public function search(array $data): array
+    public function search(DTO $data): array
     {
-        return $this->handle->preparedStatement(
-            "SELECT * FROM categories WHERE :title IS NULL OR title LIKE :title",
-            $data
-        )->fetchAll();
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT * FROM categories WHERE :title IS NULL OR title LIKE :title",
+                $data->toArray()
+            )->fetchAll();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
+    }
+
+    public function existsById(int $id): bool
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT EXISTS(SELECT 1 FROM categories WHERE id = :id)",
+                ["id" => $id]
+            )->fetchColumn();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
+    }
+
+    protected function existsByTitle(string $title): bool
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT EXISTS(SELECT 1 FROM categories WHERE title = :title)",
+                ["title" => $title]
+            )->fetchColumn();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 }

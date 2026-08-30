@@ -3,6 +3,7 @@
 namespace ghosty\taskmgr\controllers;
 
 use Exception;
+use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\dto\task\AssignAndDischargeTaskDTO;
 use ghosty\taskmgr\dto\task\CreateTaskDTO;
@@ -15,6 +16,7 @@ use ghosty\taskmgr\exceptions\ExceptionTemplate;
 use ghosty\taskmgr\exceptions\MalformedDateException;
 use ghosty\taskmgr\exceptions\MissingParamException;
 use ghosty\taskmgr\exceptions\TypeMismatchException;
+use ghosty\taskmgr\models\CategoryModel;
 use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\util\HTTP\Headers;
 use ghosty\taskmgr\models\UserModel;
@@ -23,6 +25,7 @@ class TaskController
 {
     private TaskModel $taskModel;
     private UserModel $userModel;
+    private CategoryModel $categoryModel;
 
     public function __construct(TaskModel $taskModel, UserModel $userModel)
     {
@@ -187,6 +190,57 @@ class TaskController
 
         try {
             $this->taskModel->updateTaskStatus($dto);
+        } catch (DatabaseException $e) {
+            return $e->createErrResponse();
+        }
+
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+    }
+
+    public function addTaskCategory(array $data): Response
+    {
+        try {
+            $dto = AssignAndDischargeTaskDTO::fromArray($data);
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
+        // Cross entity-Model logic. (I could put this into a service class, but I'm not sure if that's what MVC is all about)
+        if ($this->taskModel->existsById($dto->getTaskId())) {
+            throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
+        }
+
+        if ($this->categoryModel->existsById($dto->getCategoryId())) {
+            throw new AccessingNonExistentRecordException($dto->getCategoryId(), 'categories', line: __LINE__);
+        }
+
+        try {
+            $this->taskModel->addTaskCategory($dto);
+        } catch (DatabaseException $e) {
+            return $e->createErrResponse();
+        }
+
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+    }
+
+    public function removeTaskCategory(array $data): Response
+    {
+        try {
+            $dto = AssignAndDischargeTaskDTO::fromArray($data);
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
+        if ($this->taskModel->existsById($dto->getTaskId())) {
+            throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
+        }
+
+        if ($this->categoryModel->existsById($dto->getCategoryId())) {
+            throw new AccessingNonExistentRecordException($dto->getCategoryId(), 'categories', line: __LINE__);
+        }
+
+        try {
+            $this->taskModel->removeTaskCategory($dto);
         } catch (DatabaseException $e) {
             return $e->createErrResponse();
         }
