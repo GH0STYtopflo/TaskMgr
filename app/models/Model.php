@@ -4,6 +4,7 @@ namespace ghosty\taskmgr\models;
 
 
 use ghosty\taskmgr\database\DBHandle;
+use ghosty\taskmgr\dto\DTO;
 
 abstract class Model
 {
@@ -14,15 +15,17 @@ abstract class Model
         $this->handle = $handle;
     }
 
-    abstract protected function insert(array $data);
+    abstract protected function insert(DTO $data);
 
-    abstract protected function findById(int $id): ?array;
+    abstract protected function findById(DTO $data): ?array;
 
     abstract protected function findAll(): array;
 
-    abstract protected function update(float $id, array $data): void;
+    abstract protected function update(DTO $data): void;
 
-    abstract protected function delete(int $id): void;
+    abstract protected function delete(DTO $data): void;
 
-    abstract protected function search(array $data): array;
+    abstract protected function search(DTO $data): array;
+
+    abstract protected function existsById(int $id): bool;
 }

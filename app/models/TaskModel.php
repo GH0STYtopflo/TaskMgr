@@ -4,6 +4,8 @@ namespace ghosty\taskmgr\models;
 
 use ghosty\taskmgr\database\custom_types\TaskStatus;
 use ghosty\taskmgr\database\DBHandle;
+use ghosty\taskmgr\dto\user\FindUserByIdDTO;
+use ghosty\taskmgr\dto\user\GetUserTasksDTO;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\UpdatingTaskStatusToSubmittedException;
@@ -167,6 +169,18 @@ class TaskModel extends Model
                 "UPDATE tasks SET status = :status, updated_at = now() WHERE id = :id",
                 $data
             );
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
+    }
+
+    public function getUserTasks(FindUserByIdDTO $data): array
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT * FROM tasks JOIN user_tasks ON tasks.id = user_tasks.task_id WHERE public.user_tasks.user_id = :user_id",
+                $data->toArray()
+            )->fetchAll();
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
         }
