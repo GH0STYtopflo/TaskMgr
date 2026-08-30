@@ -3,6 +3,11 @@
 namespace ghosty\taskmgr\models;
 
 use ghosty\taskmgr\database\DBHandle;
+use ghosty\taskmgr\dto\DTO;
+use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\exceptions\DatabaseException;
+use ghosty\taskmgr\logger\Severity;
+use PDOException;
 
 class CommentModel extends Model
 {
@@ -11,17 +16,40 @@ class CommentModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(array $data): void
+    public function insert(DTO $data): void
     {
-        $this->handle->preparedStatement(
-            "INSERT INTO comments (body, submission_time, user_id, task_id) VALUES (:body, :submission_time, :user_id, :task_id)",
-            $data
+        try {
+            $this->handle->preparedStatement(
+                "INSERT INTO comments (body, submission_time, user_id, task_id) VALUES (:body, :submission_time, :user_id, :task_id)",
+                $data->toArray()
         );
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
-    public function findById(int $id): ?array
+    public function findById(DTO $data): ?array
     {
-        $result = $this->handle->preparedStatement("SELECT * FROM comments WHERE id = :id", ['id' => $id])->fetch();
+        try {
+            $result = $this->handle->preparedStatement(
+                "SELECT * FROM comments WHERE id = :id",
+                $data->toArray()
+            )->fetch();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                 Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
 
         if (!$result) {
             return null;
@@ -30,38 +58,103 @@ class CommentModel extends Model
 
     public function findAll(): array
     {
-        return $this->handle->query("SELECT * FROM comments")->fetchAll();
+        try {
+            return $this->handle->query("SELECT * FROM comments")->fetchAll();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
-    public function update(float $id, array $data): void
+    public function update(DTO $data): void
     {
-        $this->handle->preparedStatement(
-            "UPDATE comments SET 
-                    body = COALESCE(:body, body),
-                    submission_time = COALESCE(:submission_time, submission_time),
-                    user_id = COALESCE(:user_id, user_id),
-                    task_id = COALESCE(:task_id, task_id)
+        if ($this->existsById($data->getId())) {
+            throw new AccessingNonExistentRecordException(
+                $data->getId(),
+                'comments',
+                line: __LINE__
+            );
+        }
+
+        try {
+            $this->handle->preparedStatement(
+                "UPDATE comments SET 
+                    body = COALESCE(:body, body)
                 WHERE id = :id",
-            $data + ['id' => $id]
-        );
+                $data->toArray()
+            );
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
-    public function delete(int $id): void
+    public function delete(DTO $data): void
     {
-        $this->handle->preparedStatement(
-            "DELETE FROM comments WHERE id = :id",
-            ['id' => $id]
-        );
+        if ($this->existsById($data->getId())) {
+            throw new AccessingNonExistentRecordException($data->getId(), 'comments', line: __LINE__);
+        }
+
+        try {
+            $this->handle->preparedStatement(
+                "DELETE FROM comments WHERE id = :id",
+                $data->toArray()
+            );
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
-    public function search(array $data): array
+    public function search(DTO $data): array
     {
-        return $this->handle->preparedStatement(
-            "SELECT * FROM comments WHERE 
-                           (:body IS NULL OR body = :body) AND
-                           (:submission_time IS NULL OR submission_time = :submission_time) AND
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT * FROM comments WHERE
                            (:user_id IS NULL OR user_id = :user_id) AND
                            (:task_id IS NULL OR task_id = :task_id)",
-            $data)->fetchAll();
+                $data->toArray())->fetchAll();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
+    }
+
+    protected function existsById(int $id): bool
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT EXISTS(SELECT 1 FROM comments WHERE id = :id)",
+                ['id' => $id]
+            )->fetchColumn();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 }

@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS comments (
     body VARCHAR NOT NULL,
     submission_time TIMESTAMPTZ NOT NULL DEFAULT now(),
     user_id BIGINT REFERENCES users(id) NOT NULL,
-    task_id BIGINT REFERENCES tasks(id) NOT NULL
+    task_id BIGINT REFERENCES tasks(id) ON DELETE CASCADE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS sub_tasks (
