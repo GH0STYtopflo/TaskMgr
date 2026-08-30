@@ -2,6 +2,7 @@
 
 namespace ghosty\taskmgr\exceptions;
 use DateTimeImmutable;
+use DateTimeZone;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\logger\Severity;
 use ghosty\taskmgr\util\HTTP\Headers;
@@ -33,11 +34,14 @@ abstract class ExceptionTemplate extends RuntimeException
 
     public function createErrResponse(): Response
     {
-        return new Response([Headers::TYPE_JSON], $this->code,
-            json_encode(
-                ['error' => $this->message,
-                'code' => $this->code,
-                'datetime' => new DateTimeImmutable(timezone: 'Asia/Tehran')->format(DATE_ATOM)]) // returns now() implicitly
+        return Response::makeResponse(
+            $this->getCode(),
+            [Headers::TYPE_JSON],
+            [
+                'error' => $this->getMessage(),
+                'code' => $this->getCode(),
+                'timestamp' => new DateTimeImmutable('now', new DateTimeZone('Asia/Tehran'))->format(DATE_ATOM)
+            ]
         );
     }
 }

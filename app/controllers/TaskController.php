@@ -17,7 +17,7 @@ use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\util\HTTP\Headers;
 use ghosty\taskmgr\models\UserModel;
 
-class TaskController extends Controller
+class TaskController
 {
     private TaskModel $taskModel;
     private UserModel $userModel;
@@ -42,7 +42,7 @@ class TaskController extends Controller
             return $e->createErrResponse();
         }
 
-        return new Response([Headers::TYPE_JSON], 200);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
     public function deleteTask(int $taskId): Response
@@ -53,7 +53,7 @@ class TaskController extends Controller
             return $e->createErrResponse();
         }
 
-        return new Response([Headers::TYPE_JSON], 200);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
     public function getTaskById(int $taskId): Response
@@ -64,7 +64,7 @@ class TaskController extends Controller
             return $e->createErrResponse();
         }
 
-        return new Response([Headers::TYPE_JSON], 200, is_null($task) ? null : json_encode(TaskDTO::fromArray($task)));
+        return Response::makeResponse(200, [Headers::TYPE_JSON], TaskDTO::fromArray($task));
     }
 
     public function getAllTasks(): Response
@@ -79,7 +79,7 @@ class TaskController extends Controller
             $task = TaskDTO::fromArray($task);
         }
 
-        return new Response([Headers::TYPE_JSON], 200, json_encode($tasks));
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $tasks);
     }
 
     public function updateTask(int $taskId, array $taskData): Response
@@ -96,7 +96,7 @@ class TaskController extends Controller
             return $e->createErrResponse();
         }
 
-        return new Response([Headers::TYPE_JSON], 200);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
     public function searchTasksByTitle(string $title): Response
@@ -107,7 +107,11 @@ class TaskController extends Controller
             return $e->createErrResponse();
         }
 
-        return new Response([Headers::TYPE_JSON], 200, json_encode(TaskDTO::fromArray($tasks)));
+        foreach ($tasks as &$task) {
+            $task = TaskDTO::fromArray($task);
+        }
+
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $tasks);
     }
 
     public function assignTaskToUser(array $data): Response
@@ -124,7 +128,7 @@ class TaskController extends Controller
             return $e->createErrResponse();
         }
 
-        return new Response([Headers::TYPE_JSON], 200);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
     public function dischargeTaskFromUser(array $data): Response
@@ -136,7 +140,7 @@ class TaskController extends Controller
         }
 
         $this->taskModel->dischargeUserFromTask($dto);
-        return new Response([Headers::TYPE_JSON], 200, null);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
     public function updateTaskStatus(array $data): Response
@@ -153,6 +157,6 @@ class TaskController extends Controller
             return $e->createErrResponse();
         }
 
-        return new Response([Headers::TYPE_JSON], 200);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 }
