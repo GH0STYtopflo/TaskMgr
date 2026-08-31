@@ -5,11 +5,14 @@ namespace ghosty\taskmgr\controllers;
 use Exception;
 use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\dto\Response;
+use ghosty\taskmgr\dto\task\AddAndRemoveTaskCategory;
 use ghosty\taskmgr\dto\task\AssignAndDischargeTaskDTO;
 use ghosty\taskmgr\dto\task\CreateTaskDTO;
 use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
+use ghosty\taskmgr\dto\task\SearchTaskByTitleDTO;
 use ghosty\taskmgr\dto\task\TaskDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskDTO;
+use ghosty\taskmgr\dto\task\UpdateTaskStatusDTO;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
@@ -27,10 +30,11 @@ class TaskController
     private UserModel $userModel;
     private CategoryModel $categoryModel;
 
-    public function __construct(TaskModel $taskModel, UserModel $userModel)
+    public function __construct(TaskModel $taskModel, UserModel $userModel, CategoryModel $categoryModel)
     {
         $this->taskModel = $taskModel;
         $this->userModel = $userModel;
+        $this->categoryModel = $categoryModel;
     }
 
     public function createTask(array $taskData): Response
@@ -43,17 +47,17 @@ class TaskController
 
         try {
             $this->taskModel->insert($dto);
-        } catch (DatabaseException $e) {
+        } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
     }
 
-    public function deleteTask(int $taskId): Response
+    public function deleteTask(array $data): Response
     {
         try {
-            $dto = FindTaskByIdDTO::fromArray(['id' => $taskId]);
+            $dto = FindTaskByIdDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -64,13 +68,13 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
     }
 
-    public function getTaskById(int $taskId): Response
+    public function getTaskById(array $data): Response
     {
         try {
-            $dto = FindTaskByIdDTO::fromArray(['id' => $taskId]);
+            $dto = FindTaskByIdDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -81,7 +85,7 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON], TaskDTO::fromArray($task));
+        return Response::makeResponse(200, [Headers::TYPE_JSON->value], TaskDTO::fromArray($task));
     }
 
     public function getAllTasks(): Response
@@ -96,30 +100,36 @@ class TaskController
             $task = TaskDTO::fromArray($task);
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON], $tasks);
+        return Response::makeResponse(200, [Headers::TYPE_JSON->value], $tasks);
     }
 
-    public function updateTask(int $taskId, array $taskData): Response
+    public function updateTask(array $data): Response
     {
         try {
-            $dto = UpdateTaskDTO::fromArray($taskData + ['id' => $taskId]);
+            $dto = UpdateTaskDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
         try {
-            $this->taskModel->update($taskId, $dto->toArray());
+            $this->taskModel->update($dto);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
     }
 
     public function searchTasksByTitle(array $data): Response
     {
         try {
-            $tasks = $this->taskModel->search($data);
+            $dto = SearchTaskByTitleDTO::fromArray($data);
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
+        try {
+            $tasks = $this->taskModel->search($dto);
         } catch (DatabaseException $e) {
             return $e->createErrResponse();
         }
@@ -128,7 +138,7 @@ class TaskController
             $task = TaskDTO::fromArray($task);
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON], $tasks);
+        return Response::makeResponse(200, [Headers::TYPE_JSON->value], $tasks);
     }
 
     public function assignTaskToUser(array $data): Response
@@ -141,11 +151,11 @@ class TaskController
 
         // Cross-Model logic must be handled in controller
         if ($this->taskModel->existsById($dto->getTaskId())) {
-            throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
+            return new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__)->createErrResponse();
         }
 
         if ($this->userModel->existsById($dto->getUserId())) {
-            throw new AccessingNonExistentRecordException($dto->getUserId(), 'users', line: __LINE__);
+            return new AccessingNonExistentRecordException($dto->getUserId(), 'users', line: __LINE__)->createErrResponse();
         }
         //----------------------------------------------------
 
@@ -155,7 +165,7 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
     }
 
     public function dischargeTaskFromUser(array $data): Response
@@ -168,22 +178,26 @@ class TaskController
 
         // Cross-Model logic must be handled in controller
         if ($this->taskModel->existsById($dto->getTaskId())) {
-            throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
+            return new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__)->createErrResponse();
         }
 
         if ($this->userModel->existsById($dto->getUserId())) {
-            throw new AccessingNonExistentRecordException($dto->getUserId(), 'users', line: __LINE__);
+            return new AccessingNonExistentRecordException($dto->getUserId(), 'users', line: __LINE__)->createErrResponse();
         }
         //----------------------------------------------------
 
-        $this->taskModel->dischargeUserFromTask($dto);
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        try {
+            $this->taskModel->dischargeUserFromTask($dto);
+        } catch (DatabaseException $e) {
+            return $e->createErrResponse();
+        }
+        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
     }
 
     public function updateTaskStatus(array $data): Response
     {
         try {
-            $dto = UpdateTaskDTO::fromArray($data);
+            $dto = UpdateTaskStatusDTO::fromArray($data);
         } catch (TypeMismatchException $e) {
             $e->createErrResponse();
         }
@@ -194,57 +208,49 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
     }
 
     public function addTaskCategory(array $data): Response
     {
         try {
-            $dto = AssignAndDischargeTaskDTO::fromArray($data);
+            $dto = AddAndRemoveTaskCategory::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
         // Cross entity-Model logic. (I could put this into a service class, but I'm not sure if that's what MVC is all about)
         if ($this->taskModel->existsById($dto->getTaskId())) {
-            throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
+            return new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__)->createErrResponse();
         }
 
         if ($this->categoryModel->existsById($dto->getCategoryId())) {
-            throw new AccessingNonExistentRecordException($dto->getCategoryId(), 'categories', line: __LINE__);
+            return new AccessingNonExistentRecordException($dto->getCategoryId(), 'categories', line: __LINE__)->createErrResponse();
         }
 
         try {
             $this->taskModel->addTaskCategory($dto);
-        } catch (DatabaseException $e) {
+        } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
     }
 
     public function removeTaskCategory(array $data): Response
     {
         try {
-            $dto = AssignAndDischargeTaskDTO::fromArray($data);
+            $dto = AddAndRemoveTaskCategory::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        if ($this->taskModel->existsById($dto->getTaskId())) {
-            throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
-        }
-
-        if ($this->categoryModel->existsById($dto->getCategoryId())) {
-            throw new AccessingNonExistentRecordException($dto->getCategoryId(), 'categories', line: __LINE__);
-        }
-
         try {
             $this->taskModel->removeTaskCategory($dto);
-        } catch (DatabaseException $e) {
+        } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
     }
 }

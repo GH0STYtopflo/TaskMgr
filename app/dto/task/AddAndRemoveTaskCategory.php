@@ -20,17 +20,17 @@ class AddAndRemoveTaskCategory extends DTO
     public static function fromArray(array $data): DTO
     {
         if (!isset($data["task_id"])) {
-            throw new MissingParamException('id', line: __LINE__);
+            throw new MissingParamException('task_id', line: __LINE__);
         }
 
         if (!isset($data["category_id"])) {
-            throw new MissingParamException('id', line: __LINE__);
+            throw new MissingParamException('category_id', line: __LINE__);
         }
 
         if (!is_numeric($data["task_id"])) {
             throw new TypeMismatchException(
-                'id',
-                'string(' . $data["id"] . ')',
+                'task_id',
+                'string(' . $data["task_id"] . ')',
                 'int',
                 null, line: __LINE__
             );
@@ -38,8 +38,8 @@ class AddAndRemoveTaskCategory extends DTO
 
         if (!is_numeric($data["category_id"])) {
             throw new TypeMismatchException(
-                'id',
-                'string(' . $data["id"] . ')',
+                'category_id',
+                'string(' . $data["category_id"] . ')',
                 'int',
                 null, line: __LINE__
             );

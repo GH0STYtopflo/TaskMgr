@@ -3,12 +3,9 @@
 namespace ghosty\taskmgr\dto\task;
 
 use DateTimeImmutable;
-use Exception;
-use ghosty\taskmgr\database\custom_types\TaskStatus;
 use ghosty\taskmgr\dto\DTO;
-use ghosty\taskmgr\exceptions\MalformedDateException;
 use ghosty\taskmgr\exceptions\MissingParamException;
-use ghosty\taskmgr\logger\Severity;
+use ghosty\taskmgr\util\datetime\DateTimeHelper;
 
 class CreateTaskDTO extends DTO
 {
@@ -33,39 +30,35 @@ class CreateTaskDTO extends DTO
 
     public static function fromArray(array $data): DTO
     {
-        if (!array_key_exists('title', $data)) {
+        if (!isset($data['title'])) {
             throw new MissingParamException('title', line: __LINE__);
         }
 
-        if (!array_key_exists('desc', $data)) {
+        if (!isset($data['desc'])) {
             throw new MissingParamException('desc', line: __LINE__);
         }
 
-        if (!array_key_exists('priority', $data)) {
+        if (!isset($data['priority'])) {
             throw new MissingParamException('priority', line: __LINE__);
         }
 
-        if (!array_key_exists('deadline', $data)) {
+        if (!isset($data['deadline'])) {
             throw new MissingParamException('deadline', line: __LINE__);
         }
 
-        if (!array_key_exists('status', $data)) {
+        if (!isset($data['status'])) {
             throw new MissingParamException('status', line: __LINE__);
         }
 
-        try {
-            $deadline = new DateTimeImmutable($data['deadline']);
-        } catch (\DateMalformedStringException $e) {
-            throw new MalformedDateException($data['deadline'], line: __LINE__);
-        }
+        $deadline = DateTimeHelper::fromString($data['deadline']);
 
         return new self($data['title'], $data['desc'], $data['priority'], $deadline);
     }
 
     public function toArray(): array
     {
-        $array = parent::toArray();
-        $array['deadline'] = $this->deadline->format(DATE_ATOM);
+        $array =  parent::toArray();
+        $array['deadline'] = DateTimeHelper::toString($array['deadline']);
 
         return $array;
     }

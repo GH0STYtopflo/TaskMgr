@@ -34,7 +34,7 @@ class FindTaskByIdDTO extends DTO
             );
         }
 
-        return new self((int) $data["id"]);
+        return new self($data["id"]);
     }
 
     public function getId(): int

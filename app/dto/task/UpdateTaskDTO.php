@@ -7,6 +7,7 @@ use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\exceptions\MalformedDateException;
 use ghosty\taskmgr\exceptions\MissingParamException;
 use ghosty\taskmgr\exceptions\TypeMismatchException;
+use ghosty\taskmgr\util\datetime\DateTimeHelper;
 
 class UpdateTaskDTO extends DTO
 {
@@ -69,11 +70,7 @@ class UpdateTaskDTO extends DTO
             throw new TypeMismatchException('priority', "string(" . $data['priority'] . ")", 'int', line: __LINE__);
         }
 
-        try {
-            $deadline = new DateTimeImmutable($data['deadline']);
-        } catch (\DateMalformedStringException $e) {
-            throw new MalformedDateException($data['deadline'], $e, __LINE__);
-        }
+        $deadline = DateTimeHelper::fromString($data['deadline']);
 
         return new self((int) $data['id'], $data['title'], $data['desc'], $data['priority'], $deadline);
     }
@@ -81,7 +78,7 @@ class UpdateTaskDTO extends DTO
     public function toArray(): array
     {
         $array = parent::toArray();
-        $array['deadline'] = $this->deadline->format(DATE_ATOM);
+        $array['deadline'] = DateTimeHelper::toString($this->deadline);
 
         return $array;
     }
