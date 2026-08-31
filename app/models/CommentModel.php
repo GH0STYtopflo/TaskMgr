@@ -3,6 +3,10 @@
 namespace ghosty\taskmgr\models;
 
 use ghosty\taskmgr\database\DBHandle;
+use ghosty\taskmgr\dto\comment\CreateCommentDTO;
+use ghosty\taskmgr\dto\comment\FindCommentByIdDTO;
+use ghosty\taskmgr\dto\comment\GetTaskCommentsDTO;
+use ghosty\taskmgr\dto\comment\GetUserCommentsDTO;
 use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
@@ -16,11 +20,11 @@ class CommentModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(DTO $data): void
+    public function insert(DTO | CreateCommentDTO $data): void
     {
         try {
             $this->handle->preparedStatement(
-                "INSERT INTO comments (body, submission_time, user_id, task_id) VALUES (:body, :submission_time, :user_id, :task_id)",
+                "INSERT INTO comments (body, submission_time, user_id, task_id) VALUES (:body, now(), :user_id, :task_id)",
                 $data->toArray()
         );
         } catch (PDOException $e) {
@@ -34,7 +38,7 @@ class CommentModel extends Model
         }
     }
 
-    public function findById(DTO $data): ?array
+    public function findById(DTO | FindCommentByIdDTO $data): ?array
     {
         try {
             $result = $this->handle->preparedStatement(
@@ -73,7 +77,7 @@ class CommentModel extends Model
 
     public function update(DTO $data): void
     {
-        if ($this->existsById($data->getId())) {
+        if (!$this->existsById($data->getId())) {
             throw new AccessingNonExistentRecordException(
                 $data->getId(),
                 'comments',
@@ -99,9 +103,9 @@ class CommentModel extends Model
         }
     }
 
-    public function delete(DTO $data): void
+    public function delete(DTO | FindCommentByIdDTO $data): void
     {
-        if ($this->existsById($data->getId())) {
+        if (!$this->existsById($data->getId())) {
             throw new AccessingNonExistentRecordException($data->getId(), 'comments', line: __LINE__);
         }
 
@@ -121,7 +125,7 @@ class CommentModel extends Model
         }
     }
 
-    public function search(DTO $data): array
+    public function search(DTO | GetUserCommentsDTO | GetTaskCommentsDTO $data): array
     {
         try {
             return $this->handle->preparedStatement(

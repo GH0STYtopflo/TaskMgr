@@ -6,7 +6,7 @@ use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\exceptions\MissingParamException;
 use ghosty\taskmgr\exceptions\TypeMismatchException;
 
-class FindTaskComments extends DTO
+class GetTaskCommentsDTO extends DTO
 {
     private int $task_id;
 

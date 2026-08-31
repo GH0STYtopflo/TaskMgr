@@ -6,8 +6,8 @@ use ghosty\taskmgr\dto\comment\CommentDTO;
 use ghosty\taskmgr\dto\comment\CreateCommentDTO;
 use ghosty\taskmgr\dto\comment\EditCommentDTO;
 use ghosty\taskmgr\dto\comment\FindCommentByIdDTO;
-use ghosty\taskmgr\dto\comment\FindTaskComments;
-use ghosty\taskmgr\dto\comment\FindUserCommentsDTO;
+use ghosty\taskmgr\dto\comment\GetTaskCommentsDTO;
+use ghosty\taskmgr\dto\comment\GetUserCommentsDTO;
 use ghosty\taskmgr\dto\comment\TaskCommentDTO;
 use ghosty\taskmgr\dto\comment\UserCommentDTO;
 use ghosty\taskmgr\dto\Response;
@@ -46,19 +46,19 @@ class CommentController
         }
 
         if (!$this->userModel->existsById($dto->getUserId())) {
-            return (new AccessingNonExistentRecordException(
+            return new AccessingNonExistentRecordException(
                 $dto->getUserId(),
                 'users',
                 line: __LINE__
-            ))->createErrResponse();
+            )->createErrResponse();
         }
 
         if (!$this->taskModel->existsById($dto->getTaskId())) {
-            return (new AccessingNonExistentRecordException(
+            return new AccessingNonExistentRecordException(
                 $dto->getTaskId(),
                 'tasks',
                 line: __LINE__
-            ))->createErrResponse();
+            )->createErrResponse();
         }
 
         try {
@@ -116,19 +116,19 @@ class CommentController
     public function getUserComments(array $data): Response
     {
         try {
-            $dto = FindUserCommentsDTO::fromArray($data);
+            $dto = GetUserCommentsDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
         try {
             $comments = $this->commentModel->search($dto);
-        } catch (DatabaseException $e) {
-            $e->createErrResponse();
-        }
 
-        foreach ($comments as &$comment) {
-            $comment = UserCommentDTO::fromArray($comment);
+            foreach ($comments as &$comment) {
+                $comment = UserCommentDTO::fromArray($comment);
+            }
+        } catch (ExceptionTemplate $e) {
+            $e->createErrResponse();
         }
 
         return Response::makeResponse(
@@ -141,19 +141,19 @@ class CommentController
     public function getTaskComments(array $data): Response
     {
         try {
-            $dto = FindTaskComments::fromArray($data);
+            $dto = GetTaskCommentsDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
         try {
             $comments = $this->commentModel->search($dto);
-        } catch (DatabaseException $e) {
-            $e->createErrResponse();
-        }
 
-        foreach ($comments as &$comment) {
-            $comment = TaskCommentDTO::fromArray($comment);
+            foreach ($comments as &$comment) {
+                $comment = TaskCommentDTO::fromArray($comment);
+            }
+        } catch (ExceptionTemplate $e) {
+            $e->createErrResponse();
         }
 
         return Response::makeResponse(
@@ -192,7 +192,7 @@ class CommentController
 
         try {
             $comment = $this->commentModel->findById($dto->getId());
-        } catch (DatabaseException $e) {
+        } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 

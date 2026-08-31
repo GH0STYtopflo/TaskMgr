@@ -28,7 +28,7 @@ class FindCommentByIdDTO extends DTO
         if (!is_numeric($data["id"])) {
             throw new TypeMismatchException(
                 'id',
-                'string(' . $data["uid"] . ')',
+                'string(' . $data["id"] . ')',
                 'int',
                 null, line: __LINE__
             );

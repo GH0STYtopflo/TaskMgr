@@ -6,7 +6,7 @@ use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\exceptions\MissingParamException;
 use ghosty\taskmgr\exceptions\TypeMismatchException;
 
-class FindUserCommentsDTO extends DTO
+class GetUserCommentsDTO extends DTO
 {
     private $user_id;
 
@@ -33,7 +33,7 @@ class FindUserCommentsDTO extends DTO
             );
         }
 
-        return new self((int) $data["user_id"]);
+        return new self($data["user_id"]);
     }
 
     public function toArray(): array
