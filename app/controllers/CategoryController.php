@@ -3,7 +3,7 @@
 namespace ghosty\taskmgr\controllers;
 
 use ghosty\taskmgr\dto\category\CategoryDTO;
-use ghosty\taskmgr\dto\category\CreateCategoryDTO;
+use ghosty\taskmgr\dto\category\CreateAndSearchCategoryDTO;
 use ghosty\taskmgr\dto\category\FindCategoryById;
 use ghosty\taskmgr\dto\category\SearchCategoryDTO;
 use ghosty\taskmgr\dto\category\UpdateCategoryDTO;
@@ -26,7 +26,7 @@ class CategoryController
     public function createCategory(array $data): Response
     {
         try {
-            $dto = CreateCategoryDTO::fromArray($data);
+            $dto = CreateAndSearchCategoryDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -40,10 +40,10 @@ class CategoryController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
-    public function updateCategory(int $id, array $data): Response
+    public function updateCategory(array $data): Response
     {
         try {
-            $dto = UpdateCategoryDTO::fromArray($data + ['id' => $id]);
+            $dto = UpdateCategoryDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -57,10 +57,10 @@ class CategoryController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
-    public function deleteCategory(int $id): Response
+    public function deleteCategory(array $data): Response
     {
         try {
-            $dto = FindCategoryById::fromArray($id);
+            $dto = FindCategoryById::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }

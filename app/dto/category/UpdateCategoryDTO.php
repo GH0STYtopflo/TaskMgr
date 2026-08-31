@@ -21,7 +21,6 @@ class UpdateCategoryDTO extends DTO
         $this->new_title = $new_title;
     }
 
-
     public static function fromArray(array $data): DTO
     {
         if (!isset($data["id"])) {
@@ -29,7 +28,7 @@ class UpdateCategoryDTO extends DTO
         }
 
         if (!isset($data['new_title'])) {
-            throw new MissingParamException('id', line: __LINE__);
+            throw new MissingParamException('new_title', line: __LINE__);
         }
 
         if (!is_numeric($data["id"])) {
@@ -41,6 +40,16 @@ class UpdateCategoryDTO extends DTO
             );
         }
 
-        return new self((int) $data["id"], $data["new_title"]);
+        return new self($data["id"], $data["new_title"]);
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getNewTitle(): string
+    {
+        return $this->new_title;
     }
 }

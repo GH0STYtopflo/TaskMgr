@@ -29,11 +29,12 @@ class FindCategoryById extends DTO
                 'id',
                 'string(' . $data["id"] . ')',
                 'int',
-                null, line: __LINE__
+                null,
+                line: __LINE__
             );
         }
 
-        return new self((int) $data["id"]);
+        return new self($data["id"]);
     }
 
     public function getId(): int

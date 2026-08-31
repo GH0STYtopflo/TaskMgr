@@ -3,6 +3,9 @@
 namespace ghosty\taskmgr\models;
 
 use ghosty\taskmgr\database\DBHandle;
+use ghosty\taskmgr\dto\category\CreateAndSearchCategoryDTO;
+use ghosty\taskmgr\dto\category\FindCategoryById;
+use ghosty\taskmgr\dto\category\UpdateCategoryDTO;
 use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\CategoryExistsException;
@@ -17,7 +20,7 @@ class CategoryModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(DTO $data): void
+    public function insert(DTO | CreateAndSearchCategoryDTO $data): void
     {
         if ($this->existsById($data->getTitle())) {
             throw new CategoryExistsException(
@@ -42,7 +45,7 @@ class CategoryModel extends Model
         }
     }
 
-    public function findById(DTO $data): ?array
+    public function findById(DTO | FindCategoryById $data): ?array
     {
         try {
             return $this->handle->preparedStatement(
@@ -75,8 +78,16 @@ class CategoryModel extends Model
         }
     }
 
-    public function update(DTO $data): void
+    public function update(DTO | UpdateCategoryDTO $data): void
     {
+        if (!$this->existsById($data->getId())) {
+            throw new AccessingNonExistentRecordException(
+                $data->getId(),
+                'categories',
+                line: __LINE__,
+            );
+        }
+
         if ($this->existsByTitle($data->getTitle())) {
             throw new CategoryExistsException(
                 $data->getTitle(),
@@ -100,7 +111,7 @@ class CategoryModel extends Model
         }
     }
 
-    public function delete(DTO $data): void
+    public function delete(DTO | FindCategoryById $data): void
     {
         if (!$this->existsById($data->getId())) {
             throw new AccessingNonExistentRecordException(
@@ -126,7 +137,7 @@ class CategoryModel extends Model
         }
     }
 
-    public function search(DTO $data): array
+    public function search(DTO | CreateAndSearchCategoryDTO $data): array
     {
         try {
             return $this->handle->preparedStatement(

@@ -32,7 +32,8 @@ class CategoryDTO extends DTO
                 'id',
                 'string(' . $data["id"] . ')',
                 'int',
-                null, line: __LINE__
+                null,
+                line: __LINE__
             );
         }
 

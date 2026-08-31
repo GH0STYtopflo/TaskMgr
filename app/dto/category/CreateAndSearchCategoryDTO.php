@@ -5,7 +5,7 @@ namespace ghosty\taskmgr\dto\category;
 use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\exceptions\MissingParamException;
 
-class SearchCategoryDTO extends DTO
+class CreateAndSearchCategoryDTO extends DTO
 {
     private string $title;
 
