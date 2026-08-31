@@ -5,7 +5,7 @@ namespace ghosty\taskmgr\controllers;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\dto\subtask\CreateSubtaskDTO;
 use ghosty\taskmgr\dto\subtask\SearchSubtaskDTO;
-use ghosty\taskmgr\dto\subtask\updateSubtaskTitleDTO;
+use ghosty\taskmgr\dto\subtask\UpdateSubtaskTitleDTO;
 use ghosty\taskmgr\dto\subtask\FindSubtaskById;
 use ghosty\taskmgr\dto\subtask\GetTaskSubtask;
 use ghosty\taskmgr\dto\subtask\SetSubtaskStatusDTO;

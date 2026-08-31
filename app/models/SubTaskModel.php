@@ -4,6 +4,10 @@ namespace ghosty\taskmgr\models;
 
 use ghosty\taskmgr\database\DBHandle;
 use ghosty\taskmgr\dto\DTO;
+use ghosty\taskmgr\dto\subtask\CreateSubtaskDTO;
+use ghosty\taskmgr\dto\subtask\FindSubtaskById;
+use ghosty\taskmgr\dto\subtask\GetTaskSubtask;
+use ghosty\taskmgr\dto\subtask\SearchSubtaskDTO;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\SubtaskExistsException;
@@ -17,8 +21,12 @@ class SubTaskModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(DTO $data): void
+    public function insert(DTO | CreateSubtaskDTO $data): void
     {
+        if ($this->existsByTitle($this->existsByTitle($data->getTitle()))) {
+            throw new SubtaskExistsException($data->getTitle(), line: __LINE__);
+        }
+
         try {
             $this->handle->preparedStatement(
                 "INSERT INTO sub_tasks (title,task_id) VALUES (:title, :task_id)",
@@ -35,7 +43,7 @@ class SubTaskModel extends Model
         }
     }
 
-    public function findById(DTO $data): ?array
+    public function findById(DTO | FindSubtaskById $data): ?array
     {
         try {
             return $this->handle->preparedStatement(
@@ -70,7 +78,7 @@ class SubTaskModel extends Model
 
     public function update(DTO $data): void
     {
-        if ($this->existsById($data->getId())) {
+        if (!$this->existsById($data->getId())) {
             throw new AccessingNonExistentRecordException($data->getId(), 'sub_tasks', line: __LINE__);
         }
 
@@ -95,9 +103,9 @@ class SubTaskModel extends Model
         }
     }
 
-    public function delete(DTO $data): void
+    public function delete(DTO | FindSubtaskById $data): void
     {
-        if ($this->existsById($data->getId())) {
+        if (!$this->existsById($data->getId())) {
             throw new AccessingNonExistentRecordException($data->getId(), 'sub_tasks', line: __LINE__);
         }
 
@@ -114,7 +122,7 @@ class SubTaskModel extends Model
         }
     }
 
-    public function search(DTO $data): array
+    public function search(DTO | GetTaskSubtask | SearchSubtaskDTO $data): array
     {
         try {
             return $this->handle->preparedStatement(

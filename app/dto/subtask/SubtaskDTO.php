@@ -27,7 +27,7 @@ class SubtaskDTO extends DTO
 
     public static function fromArray(array $data): DTO
     {
-        return new self((int)$data["id"], $data["title"], (bool) $data["is_done"], (int) $data["task_id"]);
+        return new self($data["id"], $data["title"], $data["is_done"], $data["task_id"]);
     }
 
     public function getId(): int

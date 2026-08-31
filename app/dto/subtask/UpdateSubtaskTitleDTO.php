@@ -6,7 +6,7 @@ use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\exceptions\MissingParamException;
 use ghosty\taskmgr\exceptions\TypeMismatchException;
 
-class updateSubtaskTitleDTO extends DTO
+class UpdateSubtaskTitleDTO extends DTO
 {
     private int $id;
     private string $new_title;
@@ -36,11 +36,12 @@ class updateSubtaskTitleDTO extends DTO
                 'id',
                 'string(' . $data["id"] . ')',
                 'int',
-                null, line: __LINE__
+                null,
+                line: __LINE__
             );
         }
 
-        return new self((int) $data["task_id"], $data["new_title"]);
+        return new self($data["task_id"], $data["new_title"]);
     }
 
     public function toArray(): array

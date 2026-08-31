@@ -29,7 +29,7 @@ class SetSubtaskStatusDTO extends DTO
         }
 
         if (!isset($data["is_done"])) {
-            throw new MissingParamException('new_title', line: __LINE__);
+            throw new MissingParamException('is_done', line: __LINE__);
         }
 
         if (!is_numeric($data["id"])) {
