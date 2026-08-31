@@ -44,6 +44,13 @@ class UpdatePasswordDTO extends DTO
         return new self((int) $data["id"], $data["new_password"]);
     }
 
+    public function toArray(): array
+    {
+        $arr = ['username', 'is_admin'];
+
+        return parent::toArray() + array_fill_keys($arr, null);
+    }
+
     public function getId(): int
     {
         return $this->id;

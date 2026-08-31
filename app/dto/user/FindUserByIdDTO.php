@@ -36,5 +36,8 @@ class FindUserByIdDTO extends DTO
         return new self((int) $data["id"]);
     }
 
-
+    public function getId(): int
+    {
+        return $this->id;
+    }
 }

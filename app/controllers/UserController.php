@@ -37,7 +37,7 @@ class UserController
 
         try {
             $this->userModel->insert($dto);
-        } catch (DatabaseException $e) {
+        } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
@@ -54,7 +54,7 @@ class UserController
 
         try {
             $this->userModel->delete($dto);
-        } catch (DatabaseException $e) {
+        } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
@@ -82,7 +82,7 @@ class UserController
     {
         try {
             $users = $this->userModel->findAll();
-        } catch (DatabaseException $e) {
+        } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
@@ -114,7 +114,7 @@ class UserController
 
         try {
             $this->userModel->update($dto);
-        } catch (DatabaseException $e) {
+        } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
@@ -131,7 +131,7 @@ class UserController
 
         try {
             $tasks = $this->taskModel->getUserTasks($dto);
-        } catch (DatabaseException $e) {
+        } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 

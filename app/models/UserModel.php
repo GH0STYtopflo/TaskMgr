@@ -8,6 +8,7 @@ use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
+use ghosty\taskmgr\exceptions\UsernameExistsException;
 use ghosty\taskmgr\logger\Severity;
 use ghosty\taskmgr\util\PasswordEncoder;
 use PDOException;
@@ -21,10 +22,17 @@ class UserModel extends Model
 
     public function insert(CreateUserDTO | DTO $data): void
     {
-        $template = "INSERT INTO users (username, password_hash, is_admin) VALUES (:username, :password_hash, :is_admin)";
+        $template = "INSERT INTO users (username, password_hash, is_admin) VALUES (:username, :password_hash, FALSE)";
+
+        if ($this->existsByUsername($data->getUsername())) {
+            throw new UsernameExistsException($data->getPassword(), __LINE__);
+        }
 
         // encode user password to prevent storing plain_text
         $password_hash = PasswordEncoder::encode($data->getPassword());
+
+        // Unused param
+        unset($data['password']);
 
         try {
             $this->handle->preparedStatement($template, $data->toArray() + ['password_hash' => $password_hash]);
@@ -43,7 +51,7 @@ class UserModel extends Model
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
         }
 
-        if (!$result) {
+        if (empty($result)) {
             return null;
         } else return $result;
     }
@@ -69,10 +77,17 @@ class UserModel extends Model
             $data += ['password_hash' => PasswordEncoder::encode($data['new_password'])];
         }
 
+        if (array_key_exists('new_username', $data)) {
+            $data += ['username' => $data['new_username']];
+        }
+
+        unset($data['new_password']);
+        unset($data['new_username']);
+
         try {
             $this->handle->preparedStatement(
                 "UPDATE users SET 
-                 username = COALESCE(:new_username, username), 
+                 username = COALESCE(:username, username), 
                  password_hash = COALESCE(:password_hash, password_hash), 
                  is_admin = (:is_admin, is_admin)",
                 $data
@@ -88,10 +103,14 @@ class UserModel extends Model
             throw new AccessingNonExistentRecordException($data->getId(), 'users', line: __LINE__);
         }
 
-        $this->handle->preparedStatement(
-            "DELETE FROM users WHERE id = :id",
-            ['id' => $data->getId()]
-        );
+        try {
+            $this->handle->preparedStatement(
+                "DELETE FROM users WHERE id = :id",
+                $data->toArray()
+            );
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
     }
 
     public function search(DTO $data): array
@@ -108,6 +127,18 @@ class UserModel extends Model
             return $this->handle->preparedStatement(
                 "SELECT EXISTS(SELECT 1 FROM users WHERE id = :id)",
                 ['id' => $id]
+            )->fetchColumn();
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
+    }
+
+    private function existsByUsername(string $username): bool
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT EXISTS(SELECT 1 FROM users WHERE username = :username)",
+                ['username' => $username]
             )->fetchColumn();
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
