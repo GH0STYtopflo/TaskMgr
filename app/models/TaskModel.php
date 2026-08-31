@@ -5,7 +5,6 @@ namespace ghosty\taskmgr\models;
 use ghosty\taskmgr\database\custom_types\TaskStatus;
 use ghosty\taskmgr\database\DBHandle;
 use ghosty\taskmgr\dto\DTO;
-use ghosty\taskmgr\dto\task\UpdateTaskDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskStatusDTO;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
@@ -92,6 +91,18 @@ class TaskModel extends Model
         }
     }
 
+    public function existsById(int $id): bool
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT EXISTS(SELECT 1 FROM tasks WHERE id = :id)",
+                ["id" => $id]
+            )->fetchColumn();
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
+    }
+
     public function delete(DTO $data): void
     {
         if (!$this->existsById($data->getId())) {
@@ -147,25 +158,33 @@ class TaskModel extends Model
 
     public function dischargeUserFromTask(DTO $data): void
     {
-        $this->handle->preparedStatement(
-            "DELETE FROM user_tasks WHERE user_id = :user_id AND task_id = :task_id",
-            $data->toArray()
-        );
+        if (!$this->assignmentExists($data)) {
 
-        $assignee_count = $this->handle->preparedStatement(
-            "SELECT COUNT(*) FROM user_tasks WHERE task_id = :task_id",
-            ['task_id' => $data->getTaskId()]
-        )->fetchColumn();
+        }
 
-        if ($assignee_count == 0) {
+        try {
             $this->handle->preparedStatement(
-                "UPDATE tasks SET status = :status, updated_at = now() WHERE id = :task_id",
-                ['status' => TaskStatus::SUBMITTED, "task_id" => $data->getTaskId()]
+                "DELETE FROM user_tasks WHERE user_id = :user_id AND task_id = :task_id",
+                $data->toArray()
             );
+
+            $assignee_count = $this->handle->preparedStatement(
+                "SELECT COUNT(*) FROM user_tasks WHERE task_id = :task_id",
+                ['task_id' => $data->getTaskId()]
+            )->fetchColumn();
+
+            if ($assignee_count == 0) {
+                $this->handle->preparedStatement(
+                    "UPDATE tasks SET status = :status, updated_at = now() WHERE id = :task_id",
+                    ['status' => TaskStatus::SUBMITTED, "task_id" => $data->getTaskId()]
+                );
+            }
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
         }
     }
 
-    public function updateTaskStatus(UpdateTaskStatusDTO | DTO $data): void
+    public function updateTaskStatus(UpdateTaskStatusDTO|DTO $data): void
     {
         if ($this->existsById($data->getId())) {
             throw new AccessingNonExistentRecordException($data->getId(), 'tasks', line: __LINE__);
@@ -225,19 +244,19 @@ class TaskModel extends Model
         }
     }
 
-    public function existsById(int $id): bool
+    public function assignmentExists(DTO $data): bool
     {
         try {
             return $this->handle->preparedStatement(
-                "SELECT EXISTS(SELECT 1 FROM tasks WHERE id = :id)",
-                ["id" => $id]
+                "SELECT EXISTS(SELECT 1 FROM user_tasks WHERE task_id = :task_id AND user_id = :user_id)",
+                ['task_id' => $data->getTaskId(), 'user_id' => $data->getUserId()]
             )->fetchColumn();
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
         }
     }
 
-    public function taskCategoryExists(DTO $data): bool
+    private function taskCategoryExists(DTO $data): bool
     {
         try {
             return $this->handle->preparedStatement(

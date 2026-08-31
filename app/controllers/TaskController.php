@@ -176,19 +176,9 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        // Cross-Model logic must be handled in controller
-        if ($this->taskModel->existsById($dto->getTaskId())) {
-            return new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__)->createErrResponse();
-        }
-
-        if ($this->userModel->existsById($dto->getUserId())) {
-            return new AccessingNonExistentRecordException($dto->getUserId(), 'users', line: __LINE__)->createErrResponse();
-        }
-        //----------------------------------------------------
-
         try {
             $this->taskModel->dischargeUserFromTask($dto);
-        } catch (DatabaseException $e) {
+        } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
         return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
