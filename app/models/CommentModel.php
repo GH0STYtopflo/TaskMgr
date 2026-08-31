@@ -88,7 +88,7 @@ class CommentModel extends Model
         try {
             $this->handle->preparedStatement(
                 "UPDATE comments SET 
-                    body = COALESCE(:body, body)
+                    body = COALESCE(:new_body, body)
                 WHERE id = :id",
                 $data->toArray()
             );
