@@ -5,11 +5,16 @@ namespace ghosty\taskmgr\models;
 use ghosty\taskmgr\database\custom_types\TaskStatus;
 use ghosty\taskmgr\database\DBHandle;
 use ghosty\taskmgr\dto\DTO;
+use ghosty\taskmgr\dto\task\AddAndRemoveTaskCategory;
+use ghosty\taskmgr\dto\task\AssignAndDischargeTaskDTO;
+use ghosty\taskmgr\dto\task\CreateTaskDTO;
+use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskStatusDTO;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\PriorityOutOfRangeException;
+use ghosty\taskmgr\exceptions\TaskAssignmentDoesNotExistException;
 use ghosty\taskmgr\exceptions\TaskCategoryDoesNotExistException;
 use ghosty\taskmgr\exceptions\UpdatingTaskStatusToSubmittedException;
 use ghosty\taskmgr\logger\Severity;
@@ -22,7 +27,7 @@ class TaskModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(DTO $data): int
+    public function insert(CreateTaskDTO | DTO$data): int
     {
         $pri = $data->getPriority();
         if ($pri > 20 || $pri < 0) {
@@ -43,7 +48,7 @@ class TaskModel extends Model
         return $res->fetchColumn();
     }
 
-    public function findById(DTO $data): ?array
+    public function findById(DTO | FindTaskByIdDTO $data): ?array
     {
         try {
             return $this->handle->preparedStatement("SELECT * FROM tasks WHERE id = :id", $data->toArray())->fetch();
@@ -61,7 +66,7 @@ class TaskModel extends Model
         }
     }
 
-    public function update(DTO $data): void
+    public function update(DTO | UpdateTaskStatusDTO $data): void
     {
         if (!$this->existsById($data->getId())) {
             throw new AccessingNonExistentRecordException(
@@ -86,18 +91,6 @@ class TaskModel extends Model
                  updated_at = now()",
                 $data->toArray()
             );
-        } catch (PDOException $e) {
-            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
-        }
-    }
-
-    public function existsById(int $id): bool
-    {
-        try {
-            return $this->handle->preparedStatement(
-                "SELECT EXISTS(SELECT 1 FROM tasks WHERE id = :id)",
-                ["id" => $id]
-            )->fetchColumn();
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
         }
@@ -133,7 +126,7 @@ class TaskModel extends Model
         }
     }
 
-    public function assignTaskToUser(DTO $data): void
+    public function assignTaskToUser(DTO | AssignAndDischargeTaskDTO $data): void
     {
         try {
             $this->handle->preparedStatement(
@@ -156,10 +149,10 @@ class TaskModel extends Model
         }
     }
 
-    public function dischargeUserFromTask(DTO $data): void
+    public function dischargeUserFromTask(DTO | AssignAndDischargeTaskDTO $data): void
     {
-        if (!$this->assignmentExists($data)) {
-
+        if ($this->assignmentExists($data)) {
+            throw new TaskAssignmentDoesNotExistException($data->getUserId(), $data->getTaskId(), line: __LINE__);
         }
 
         try {
@@ -184,7 +177,7 @@ class TaskModel extends Model
         }
     }
 
-    public function updateTaskStatus(UpdateTaskStatusDTO|DTO $data): void
+    public function updateTaskStatus(UpdateTaskStatusDTO | DTO $data): void
     {
         if ($this->existsById($data->getId())) {
             throw new AccessingNonExistentRecordException($data->getId(), 'tasks', line: __LINE__);
@@ -204,7 +197,7 @@ class TaskModel extends Model
         }
     }
 
-    public function getUserTasks(FindUserByIdDTO $data): array
+    public function getUserTasks(FindUserByIdDTO | DTO $data): array
     {
         try {
             return $this->handle->preparedStatement(
@@ -216,7 +209,7 @@ class TaskModel extends Model
         }
     }
 
-    public function addTaskCategory(DTO $data): void
+    public function addTaskCategory(DTO | AddAndRemoveTaskCategory $data): void
     {
         try {
             $this->handle->preparedStatement(
@@ -228,7 +221,7 @@ class TaskModel extends Model
         }
     }
 
-    public function removeTaskCategory(DTO $data): void
+    public function removeTaskCategory(DTO | AddAndRemoveTaskCategory $data): void
     {
         if (!$this->taskCategoryExists($data)) {
             throw new TaskCategoryDoesNotExistException($data->getTaskId(), $data->getCategoryId(), line: __LINE__);
@@ -239,6 +232,18 @@ class TaskModel extends Model
                 "DELETE FROM task_categories WHERE task_id = :task_id AND category_id = :category_id",
                 $data->toArray()
             );
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
+    }
+
+    public function existsById(int $id): bool
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT EXISTS(SELECT 1 FROM tasks WHERE id = :id)",
+                ["id" => $id]
+            )->fetchColumn();
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
         }

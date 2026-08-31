@@ -6,6 +6,8 @@ use ghosty\taskmgr\database\DBHandle;
 use ghosty\taskmgr\dto\user\CreateUserDTO;
 use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
+use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
+use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\UsernameExistsException;
@@ -41,7 +43,7 @@ class UserModel extends Model
         }
     }
 
-    public function findById(DTO $data): ?array
+    public function findById(DTO | FindUserByIdDTO $data): ?array
     {
         $template = "SELECT * FROM users WHERE id = :id";
 
@@ -65,7 +67,7 @@ class UserModel extends Model
         }
     }
 
-    public function update(DTO $data): void
+    public function update(DTO | UpdateUsernameDTO | UpdatePasswordDTO $data): void
     {
         if (!$this->existsById($data->getId())) {
             throw new AccessingNonExistentRecordException($data->getId(), 'users', line: __LINE__);
@@ -115,10 +117,14 @@ class UserModel extends Model
 
     public function search(DTO $data): array
     {
-        return $this->handle->preparedStatement(
-            "SELECT * FROM users WHERE (:username IS NULL OR username LIKE :username)",
-            $data
-        )->fetchAll();
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT * FROM users WHERE (:username IS NULL OR username LIKE :username)",
+                $data->toArray()
+            )->fetchAll();
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
     }
 
     public function existsById(int $id): bool
