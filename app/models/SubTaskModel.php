@@ -3,6 +3,12 @@
 namespace ghosty\taskmgr\models;
 
 use ghosty\taskmgr\database\DBHandle;
+use ghosty\taskmgr\dto\DTO;
+use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\exceptions\DatabaseException;
+use ghosty\taskmgr\exceptions\SubtaskExistsException;
+use ghosty\taskmgr\logger\Severity;
+use PDOException;
 
 class SubTaskModel extends Model
 {
@@ -11,50 +17,157 @@ class SubTaskModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(array $data): void
+    public function insert(DTO $data): void
     {
-        $this->handle->preparedStatement(
-            "INSERT INTO sub_tasks (title, is_done, task_id) VALUES (:title, :is_done, :task_id)",
-            $data
+        try {
+            $this->handle->preparedStatement(
+                "INSERT INTO sub_tasks (title,task_id) VALUES (:title, :task_id)",
+                $data->toArray()
+            );
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
         );
+        }
     }
 
-    public function findById(int $id): ?array
+    public function findById(DTO $data): ?array
     {
-        return $this->handle->preparedStatement(
-            "SELECT * FROM sub_tasks WHERE id = :id",
-            ['id' => $id]
-        )->fetch();
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT * FROM sub_tasks WHERE id = :id",
+                $data->toArray()
+            )->fetch();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
     public function findAll(): array
     {
-        return $this->handle->query("SELECT * FROM sub_tasks")->fetchAll();
+        try {
+            return $this->handle->query("SELECT * FROM sub_tasks")->fetchAll();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
-    public function update(float $id, array $data): void
+    public function update(DTO $data): void
     {
-        $this->handle->preparedStatement(
-            "UPDATE sub_tasks SET 
+        if ($this->existsById($data->getId())) {
+            throw new AccessingNonExistentRecordException($data->getId(), 'sub_tasks', line: __LINE__);
+        }
+
+        if (!is_null($data->getTitle()) && $this->existsByTitle($data->getTitle())) {
+            throw new SubtaskExistsException($data->getTitle(), line: __LINE__);
+        }
+
+        try {
+            $this->handle->preparedStatement(
+                "UPDATE sub_tasks SET 
                      title = COALESCE(:title, title),
-                     is_done = COALESCE(:is_done, is_done),
-                     task_id = COALESCE(:task_id, task_id)",
-            $data + ['id' => $id]);
+                     is_done = COALESCE(:is_done, is_done)",
+                $data->toArray());
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
-    public function delete(int $id): void
+    public function delete(DTO $data): void
     {
-        $this->handle->preparedStatement("DELETE FROM sub_tasks WHERE id = :id", ['id' => $id]);
+        if ($this->existsById($data->getId())) {
+            throw new AccessingNonExistentRecordException($data->getId(), 'sub_tasks', line: __LINE__);
+        }
+
+        try {
+            $this->handle->preparedStatement("DELETE FROM sub_tasks WHERE id = :id", $data->toArray());
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 
-    public function search(array $data): array
+    public function search(DTO $data): array
     {
-        return $this->handle->preparedStatement(
-            "SELECT * FROM sub_tasks WHERE 
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT * FROM sub_tasks WHERE 
                             (:title IS NULL OR title LIKE :title) AND
-                            (:is_done IS NULL OR task_id = :task_id) AND 
+                            (:is_done IS NULL OR is_done = :is_done) AND 
                             (:task_id IS NULL OR task_id = :task_id)",
-            $data
-        )->fetchAll();
+                $data->toArray()
+            )->fetchAll();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
+    }
+
+    protected function existsById(int $id): bool
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT EXISTS(SELECT 1 FROM sub_tasks WHERE id = :id)",
+                ['id' => $id]
+            )->fetchColumn();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
+    }
+
+    public function existsByTitle(string $title): bool
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT EXISTS(SELECT 1 FROM sub_tasks WHERE title = :title)",
+                ['title' => $title]
+            )->fetchColumn();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
     }
 }
