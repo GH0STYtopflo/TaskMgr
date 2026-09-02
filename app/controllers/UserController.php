@@ -27,6 +27,13 @@ class UserController
         $this->taskModel = $taskModel;
     }
 
+    // I should probably use attributes but PHPDoc will do just fine. I'm not planning on using reflection
+    /**
+     * Maps to: POST /sign-up
+     *
+     * @param array $data
+     * @return Response
+     */
     public function createUser(array $data): Response
     {
         try {
@@ -44,6 +51,12 @@ class UserController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: DELETE /users/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function deleteUser(array $data): Response
     {
         try {
@@ -61,6 +74,12 @@ class UserController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: GET /users/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function getUserById(array $data): Response
     {
         try {
@@ -78,6 +97,11 @@ class UserController
         return Response::makeResponse(200, [Headers::TYPE_JSON], is_null($user) ? null : UserDTO::fromArray($user));
     }
 
+    /**
+     * Maps to: GET /users
+     *
+     * @return Response
+     */
     public function getAllUsers(): Response
     {
         try {
@@ -93,6 +117,12 @@ class UserController
         return Response::makeResponse(200, [Headers::TYPE_JSON], $users);
     }
 
+    /**
+     * Maps to PATCH /users/{id}/update-username
+     *
+     * @param array $data
+     * @return Response
+     */
     public function updateUsername(array $data): Response
     {
         try {
@@ -104,6 +134,12 @@ class UserController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: PATCH /users/{id}/update-password
+     *
+     * @param array $data
+     * @return Response
+     */
     public function updatePassword(array $data): Response
     {
         try {
@@ -121,6 +157,12 @@ class UserController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: GET /users/{id}/tasks
+     *
+     * @param array $data
+     * @return Response
+     */
     public function getUserTasks(array $data): Response
     {
         try {

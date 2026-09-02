@@ -37,6 +37,12 @@ class TaskController
         $this->categoryModel = $categoryModel;
     }
 
+    /**
+     * Maps to: POST /tasks
+     *
+     * @param array $taskData
+     * @return Response
+     */
     public function createTask(array $taskData): Response
     {
         try {
@@ -51,9 +57,15 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: DELETE /tasks/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function deleteTask(array $data): Response
     {
         try {
@@ -68,9 +80,15 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: GET /tasks/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function getTaskById(array $data): Response
     {
         try {
@@ -85,9 +103,14 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON->value], TaskDTO::fromArray($task));
+        return Response::makeResponse(200, [Headers::TYPE_JSON], TaskDTO::fromArray($task));
     }
 
+    /**
+     * Maps to: GET /tasks
+     *
+     * @return Response
+     */
     public function getAllTasks(): Response
     {
         try {
@@ -100,9 +123,15 @@ class TaskController
             $task = TaskDTO::fromArray($task);
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON->value], $tasks);
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $tasks);
     }
 
+    /**
+     * Maps to: PATCH /tasks/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function updateTask(array $data): Response
     {
         try {
@@ -117,9 +146,15 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: GET /tasks/search
+     *
+     * @param array $data
+     * @return Response
+     */
     public function searchTasksByTitle(array $data): Response
     {
         try {
@@ -138,9 +173,15 @@ class TaskController
             $task = TaskDTO::fromArray($task);
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON->value], $tasks);
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $tasks);
     }
 
+    /**
+     * Maps to: POST /tasks/{task_id}/users
+     *
+     * @param array $data
+     * @return Response
+     */
     public function assignTaskToUser(array $data): Response
     {
         try {
@@ -165,9 +206,15 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: DELETE /tasks/{task_id}/users
+     *
+     * @param array $data
+     * @return Response
+     */
     public function dischargeTaskFromUser(array $data): Response
     {
         try {
@@ -181,9 +228,15 @@ class TaskController
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
-        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: PATCH /tasks/{id}/update-status
+     *
+     * @param array $data
+     * @return Response
+     */
     public function updateTaskStatus(array $data): Response
     {
         try {
@@ -198,9 +251,15 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: POST /tasks/{task_id}/categories
+     *
+     * @param array $data
+     * @return Response
+     */
     public function addTaskCategory(array $data): Response
     {
         try {
@@ -224,9 +283,15 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: DELETE /tasks/{task_id}/categories
+     *
+     * @param array $data
+     * @return Response
+     */
     public function removeTaskCategory(array $data): Response
     {
         try {
@@ -241,6 +306,6 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON->value]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 }

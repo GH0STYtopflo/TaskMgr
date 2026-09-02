@@ -5,7 +5,6 @@ namespace ghosty\taskmgr\controllers;
 use ghosty\taskmgr\dto\category\CategoryDTO;
 use ghosty\taskmgr\dto\category\CreateAndSearchCategoryDTO;
 use ghosty\taskmgr\dto\category\FindCategoryById;
-use ghosty\taskmgr\dto\category\SearchCategoryDTO;
 use ghosty\taskmgr\dto\category\UpdateCategoryDTO;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\exceptions\DatabaseException;
@@ -23,6 +22,12 @@ class CategoryController
         $this->categoryModel = $categoryModel;
     }
 
+    /**
+     * Maps to: POST /categories
+     *
+     * @param array $data
+     * @return Response
+     */
     public function createCategory(array $data): Response
     {
         try {
@@ -40,6 +45,12 @@ class CategoryController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: PATCH /categories/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function updateCategory(array $data): Response
     {
         try {
@@ -57,6 +68,12 @@ class CategoryController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: DELETE /categories/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function deleteCategory(array $data): Response
     {
         try {
@@ -74,10 +91,16 @@ class CategoryController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: GET /categories?query
+     *
+     * @param array $data
+     * @return Response
+     */
     public function searchCategory(array $data): Response
     {
         try {
-            $dto = SearchCategoryDTO::fromArray($data);
+            $dto = CreateAndSearchCategoryDTO::fromArray($data);
         } catch (MissingParamException $e) {
             return $e->createErrResponse();
         }
@@ -95,6 +118,11 @@ class CategoryController
         return Response::makeResponse(200, [Headers::TYPE_JSON], $categories);
     }
 
+    /**
+     * Maps to: GET /categories
+     *
+     * @return Response
+     */
     public function getAllCategories(): Response
     {
         try {
@@ -110,16 +138,22 @@ class CategoryController
         return Response::makeResponse(200, [Headers::TYPE_JSON], $categories);
     }
 
-    public function getCategoryById(int $id): Response
+    /**
+     * Maps to: GET /categories/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
+    public function getCategoryById(array $data): Response
     {
         try {
-            $dto = FindCategoryById::fromArray(["id" => $id]);
+            $dto = FindCategoryById::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
         try {
-            $category = $this->categoryModel->findById($id);
+            $category = $this->categoryModel->findById($dto);
         } catch (DatabaseException $e) {
             return $e->createErrResponse();
         }

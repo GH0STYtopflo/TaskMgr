@@ -33,6 +33,12 @@ class SubtaskController
         $this->taskModel = $taskModel;
     }
 
+    /**
+     * Maps to: Maps to: POST /tasks/{task_id}/subtasks
+     *
+     * @param array $data
+     * @return Response
+     */
     public function createSubtask(array $data): Response
     {
         try {
@@ -61,6 +67,12 @@ class SubtaskController
         );
     }
 
+    /**
+     * Maps to: Maps to: POST /subtasks/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function deleteSubtask(array $data): Response
     {
         try {
@@ -78,6 +90,12 @@ class SubtaskController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: GET /subtasks/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function getSubtaskById(array $data): Response
     {
         try {
@@ -95,6 +113,12 @@ class SubtaskController
         return Response::makeResponse(200, [Headers::TYPE_JSON], SubtaskDTO::fromArray($subtask));
     }
 
+    /**
+     * Maps to: GET /subtasks
+     *
+     * @param array $data
+     * @return Response
+     */
     public function getAllSubtasks(array $data): Response
     {
         try {
@@ -111,6 +135,12 @@ class SubtaskController
         return Response::makeResponse(200, [Headers::TYPE_JSON], $tasks);
     }
 
+    /**
+     * Maps to: GET /tasks/{task_id}/subtasks
+     *
+     * @param array $data
+     * @return Response
+     */
     public function getTaskSubtasks(array $data): Response
     {
         try {
@@ -132,6 +162,12 @@ class SubtaskController
         return Response::makeResponse(200, [Headers::TYPE_JSON], $subtasks);
     }
 
+    /**
+     * Maps to: PATCH /subtasks/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function updateSubtaskStatus(array $data): Response
     {
         try {
@@ -149,6 +185,12 @@ class SubtaskController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * public PUT /subtasks/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function updateSubtaskTitle(array $data): Response
     {
         try {
@@ -166,6 +208,12 @@ class SubtaskController
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
+    /**
+     * Maps to: GET /subtasks?query
+     *
+     * @param array $data
+     * @return Response
+     */
     public function searchSubtasks(array $data): Response
     {
         try {

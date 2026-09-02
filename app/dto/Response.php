@@ -40,7 +40,7 @@ class Response
 
     public function getHeaders(): array
     {
-        return $this->headers;
+        return empty($this->headers) ? [] : $this->headers;
     }
 
     public function getStatusCode(): int
@@ -48,8 +48,8 @@ class Response
         return $this->statusCode;
     }
 
-    public function getBody(): ?string
+    public function getBody(): string
     {
-        return $this->body;
+        return empty($this->body) ? '' : $this->body;
     }
 }

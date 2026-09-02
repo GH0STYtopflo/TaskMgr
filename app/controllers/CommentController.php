@@ -37,6 +37,12 @@ class CommentController
         $this->taskModel = $taskModel;
     }
 
+    /**
+     * Maps to: POST /comments
+     *
+     * @param array $data
+     * @return Response
+     */
     public function createComment(array $data): Response
     {
         try {
@@ -73,6 +79,12 @@ class CommentController
         );
     }
 
+    /**
+     * Maps to: DELETE /comments/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function deleteComment(array $data): Response
     {
         try {
@@ -93,6 +105,12 @@ class CommentController
         );
     }
 
+    /**
+     * Maps to: PATCH /comments/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function editComment(array $data): Response
     {
         try {
@@ -113,6 +131,12 @@ class CommentController
         );
     }
 
+    /**
+     * Maps to: GET /users/{user_id}/comments
+     *
+     * @param array $data
+     * @return Response
+     */
     public function getUserComments(array $data): Response
     {
         try {
@@ -138,6 +162,12 @@ class CommentController
         );
     }
 
+    /**
+     * Maps to: GET /tasks/{task_id}/comments
+     *
+     * @param array $data
+     * @return Response
+     */
     public function getTaskComments(array $data): Response
     {
         try {
@@ -163,6 +193,12 @@ class CommentController
         );
     }
 
+    /**
+     * Maps to: GET /comments
+     *
+     * @param array $data
+     * @return Response
+     */
     public function getAllComments(array $data): Response
     {
         try {
@@ -182,6 +218,12 @@ class CommentController
         );
     }
 
+    /**
+     * Maps to: GET /comments/{id}
+     *
+     * @param array $data
+     * @return Response
+     */
     public function getCommentById(array $data): Response
     {
         try {
