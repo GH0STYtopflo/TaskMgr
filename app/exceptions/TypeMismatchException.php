@@ -13,7 +13,9 @@ class TypeMismatchException extends ExceptionTemplate
             "Expected type {$expected }, received type {$received} for param {$param}",
             400,
             Severity::WARNING,
+            'PARAMETER_TYPE_MISMATCH',
             $previous,
-            $line);
+            $line
+        );
     }
 }

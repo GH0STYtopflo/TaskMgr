@@ -13,13 +13,14 @@ class SubtaskExistsException extends ExceptionTemplate
         ?Throwable $previous = null,
         int        $line = -1)
     {
-        // TODO: pass on a better status code ($message
         parent::__construct(
             "Subtask already exists for title: {$title}",
-            400,
+            409,
             Severity::WARNING,
+            'DUPLICATE_SUBTASK',
             $previous,
-            $line);
+            $line
+        );
     }
 
 }

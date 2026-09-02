@@ -14,6 +14,7 @@ class AccessingNonExistentRecordException extends ExceptionTemplate
             "accessing non-existent record with id: {$id} from resource: {'$resource'}",
             400,
             Severity::WARNING,
+            'ACCESSING_NON_EXISTENT_RECORD',
             $previous,
             $line);
     }

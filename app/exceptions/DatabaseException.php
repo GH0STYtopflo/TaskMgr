@@ -13,6 +13,6 @@ class DatabaseException extends ExceptionTemplate
                                 ?Throwable $previous = null,
                                 int        $line = -1)
     {
-        parent::__construct($message, $code, $severity, $previous, $line);
+        parent::__construct($message, $code, $severity, 'DATABASE_ERROR' ,$previous, line: $line);
     }
 }

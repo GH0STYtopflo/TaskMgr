@@ -14,6 +14,7 @@ class ExpiredTokenException extends ExceptionTemplate
             'Authentication token has expired',
             401,
             Severity::WARNING,
+            'TOKEN_EXPIRED',
             $previous,
             $line
         );

@@ -13,6 +13,7 @@ class InvalidSettingsException extends ExceptionTemplate
             "Invalid configuration option '{$option}'",
             $code,
             Severity::ERROR,
+            'INVALID_DATABASE_CONFIG',
             $previous,
             $line
         );

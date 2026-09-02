@@ -10,9 +10,10 @@ class MissingParamException extends ExceptionTemplate
     public function __construct(string $missing, ?Throwable $previous = null, int $line = -1)
     {
         parent::__construct(
-            "Missing argument {'$missing'}",
+            "Missing required parameter {'$missing'}",
             400,
             Severity::WARNING,
+            'MISSING_REQUIRED_PARAMETER',
             $previous,
             $line
         );

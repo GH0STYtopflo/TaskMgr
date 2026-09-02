@@ -22,6 +22,7 @@ class PriorityOutOfRangeException extends ExceptionTemplate
             "Priority must be an integer between 1 and 20. $provided given.",
             400,
             Severity::WARNING,
+            'PRIORITY_OUT_OF_RANGE',
             $previous,
             $line);
     }

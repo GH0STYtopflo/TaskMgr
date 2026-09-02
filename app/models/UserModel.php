@@ -27,7 +27,7 @@ class UserModel extends Model
         $template = "INSERT INTO users (username, password_hash, is_admin) VALUES (:username, :password_hash, FALSE)";
 
         if ($this->existsByUsername($data->getUsername())) {
-            throw new UsernameExistsException($data->getPassword(), __LINE__);
+            throw new UsernameExistsException($data->getUsername(), __LINE__);
         }
 
         // encode user password to prevent storing plain_text
@@ -93,7 +93,8 @@ class UserModel extends Model
                 "UPDATE users SET 
                  username = COALESCE(:username, username), 
                  password_hash = COALESCE(:password_hash, password_hash), 
-                 is_admin = (:is_admin, is_admin)",
+                 is_admin = COALESCE(:is_admin, is_admin)
+                 WHERE id = :id",
                 $data
             );
         } catch (PDOException $e) {

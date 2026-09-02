@@ -18,6 +18,7 @@ class TaskAssignmentDoesNotExistException extends ExceptionTemplate
             "Task assignment doesn't exist for user_id: {$user_id}, task_id: {$task_id}",
             400,
             Severity::WARNING,
+            'TASK_ASSIGNMENT_DOES_NOT_EXIST',
             $previous,
             $line
         );

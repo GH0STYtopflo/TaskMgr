@@ -242,7 +242,7 @@ class Router
             },
 
             // User routes
-            'POST /sign-up' => function(array $data): Response {
+            'POST /signup' => function(array $data): Response {
                 return $this->userController->createUser($data);
             },
             'DELETE /users/{id}' => function(array $data): Response {
@@ -254,10 +254,10 @@ class Router
             'GET /users' => function(array $data): Response {
                 return $this->userController->getAllUsers();
             },
-            'PATCH /users/{id}/update-username' => function(array $data): Response {
+            'PATCH /users/{id}/update_username' => function(array $data): Response {
                 return $this->userController->updateUsername($data);
             },
-            'PATCH /users/{id}/update-password' => function(array $data): Response {
+            'PATCH /users/{id}/update_password' => function(array $data): Response {
                 return $this->userController->updatePassword($data);
             },
             'GET /users/{id}/tasks' => function(array $data): Response {

@@ -12,6 +12,7 @@ use ghosty\taskmgr\dto\user\LoginResponseDTO;
 use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
 use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
 use ghosty\taskmgr\dto\user\UserDTO;
+use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
 use ghosty\taskmgr\exceptions\InvalidCredentials;
@@ -53,7 +54,7 @@ class UserController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        return Response::makeResponse(201, [Headers::TYPE_JSON]);
     }
 
     /**
@@ -156,7 +157,7 @@ class UserController
     }
 
     /**
-     * Maps to PATCH /users/{id}/update-username
+     * Maps to PATCH /users/{id}/update_username
      *
      * @param array $data
      * @return Response
@@ -169,11 +170,17 @@ class UserController
             return $e->createErrResponse();
         }
 
+        try {
+            $this->userModel->update($dto);
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
     /**
-     * Maps to: PATCH /users/{id}/update-password
+     * Maps to: PATCH /users/{id}/update_password
      *
      * @param array $data
      * @return Response
@@ -207,6 +214,10 @@ class UserController
             $dto = FindUserByIdDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        if (!$this->userModel->existsById($dto->getId())) {
+            return new AccessingNonExistentRecordException($dto->getId(), 'users', line: __LINE__)->createErrResponse();
         }
 
         try {

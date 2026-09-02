@@ -14,7 +14,9 @@ class UpdatingTaskStatusToSubmittedException extends ExceptionTemplate
             "Cannot update task status to 'SUBMITTED'",
             400,
             Severity::WARNING,
+            'STATUS_NOT_ALLOWED',
             $previous,
-            $line);
+            $line
+        );
     }
 }

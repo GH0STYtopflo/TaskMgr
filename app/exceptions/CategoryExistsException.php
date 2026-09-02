@@ -14,9 +14,11 @@ class CategoryExistsException extends ExceptionTemplate
     {
         parent::__construct(
             "Category with title {'$title'} already exists",
-            400,
+            409,
             Severity::WARNING,
+            'DUPLICATE_CATEGORY',
             $previous,
-            $line);
+            $line
+        );
     }
 }

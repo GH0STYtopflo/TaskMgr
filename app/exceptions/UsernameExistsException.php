@@ -11,11 +11,13 @@ class UsernameExistsException extends ExceptionTemplate
     public function __construct(string $username, int $line = -1, ?Throwable $previous = null)
     {
         parent::__construct(
-            "Username '{$username}' is taken by another user",
-            400,
+            "Username '{$username}' is not available",
+            409,
             Severity::WARNING,
+            'USERNAME_EXISTS',
             $previous,
-            $line);
+            $line
+        );
     }
 
 }

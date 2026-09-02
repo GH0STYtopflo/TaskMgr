@@ -14,6 +14,7 @@ class InvalidTokenException extends ExceptionTemplate
             'Authentication token is invalid',
             401,
             Severity::WARNING,
+            'INVALID_AUTHENTICATION_TOKEN',
             $previous,
             $line
         );

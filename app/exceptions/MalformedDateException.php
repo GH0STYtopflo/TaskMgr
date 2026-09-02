@@ -14,6 +14,7 @@ class MalformedDateException extends ExceptionTemplate
             "Malformed date {'$malformed'}",
             400,
             Severity::WARNING,
+            'MALFORMED_DATE_FORMAT',
             $previous,
             $line
         );

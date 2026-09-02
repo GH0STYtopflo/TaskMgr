@@ -14,6 +14,7 @@ class InvalidCredentials extends ExceptionTemplate
             "Invalid username and/or password provided",
             401,
             Severity::WARNING,
+            'INVALID_CREDENTIALS',
             $previous,
             $line
         );

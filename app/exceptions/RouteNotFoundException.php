@@ -14,8 +14,10 @@ class RouteNotFoundException extends ExceptionTemplate
             "Request route '{$method} {$reqRoute}' not found",
             404,
             Severity::WARNING,
+            'INVALID_REQUEST_ROUTE',
             $previous,
-            $line);
+            $line
+        );
     }
 
 }

@@ -18,7 +18,9 @@ class TaskCategoryDoesNotExistException extends ExceptionTemplate
             "Task category does not exist for task_id: {$task_id} and category_id: {$category_id}",
             400,
             Severity::WARNING,
+            'TASK_CATEGORY_DOES_NOT_EXIST',
             $previous,
-            $line);
+            $line
+        );
     }
 }
