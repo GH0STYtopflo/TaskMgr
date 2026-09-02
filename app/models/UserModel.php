@@ -33,11 +33,13 @@ class UserModel extends Model
         // encode user password to prevent storing plain_text
         $password_hash = PasswordEncoder::encode($data->getPassword());
 
+        $data = $data->toArray() + ['password_hash' => $password_hash];
+
         // Unused param
         unset($data['password']);
 
         try {
-            $this->handle->preparedStatement($template, $data->toArray() + ['password_hash' => $password_hash]);
+            $this->handle->preparedStatement($template, $data);
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
         }
@@ -149,5 +151,19 @@ class UserModel extends Model
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
         }
+    }
+
+    public function findByUsername(string $username): ?array
+    {
+        try {
+            $user = $this->handle->preparedStatement("SELECT * FROM users WHERE username = :username",
+            ['username' => $username])->fetch();
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
+
+        if (empty($user)) {
+            return null;
+        } else return $user;
     }
 }

@@ -14,6 +14,7 @@ abstract class DTO implements JsonSerializable
         foreach ($reflection->getProperties() as $property) {
             $property->setAccessible(true);
             $vars[$property->getName()] = $property->getValue($this);
+            $property->setAccessible(false);
         }
 
         return $vars;

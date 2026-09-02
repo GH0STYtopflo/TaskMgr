@@ -132,6 +132,11 @@ class Router
                 return self::test($data);
             },
 
+            // Login
+            'POST /login' => function(array $data): Response {
+                return $this->userController->login($data);
+            },
+
             // Category routes
             'POST /categories' => function(array $data): Response {
                 return $this->categoryController->createCategory($data);

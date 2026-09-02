@@ -2,19 +2,24 @@
 
 namespace ghosty\taskmgr\controllers;
 
+use ghosty\taskmgr\bridge\authentication\JWT;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\dto\task\TaskDTO;
 use ghosty\taskmgr\dto\user\CreateUserDTO;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
+use ghosty\taskmgr\dto\user\LoginDTO;
+use ghosty\taskmgr\dto\user\LoginResponseDTO;
 use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
 use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
 use ghosty\taskmgr\dto\user\UserDTO;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
+use ghosty\taskmgr\exceptions\InvalidCredentials;
 use ghosty\taskmgr\exceptions\MissingParamException;
 use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\models\UserModel;
 use ghosty\taskmgr\util\HTTP\Headers;
+use ghosty\taskmgr\util\PasswordEncoder;
 
 class UserController
 {
@@ -49,6 +54,39 @@ class UserController
         }
 
         return Response::makeResponse(200, [Headers::TYPE_JSON]);
+    }
+
+    /**
+     * Maps to: POST /login
+     *
+     * @param array $data
+     * @return Response
+     */
+    public function login(array $data): Response
+    {
+        try {
+            $dto = LoginDto::fromArray($data);
+        } catch (MissingParamException $e) {
+            return $e->createErrResponse();
+        }
+
+        try {
+            $user = $this->userModel->findByUsername($dto->getUsername());
+        } catch (DatabaseException $e) {
+            return $e->createErrResponse();
+        }
+
+        if (is_null($user)) {
+            return new InvalidCredentials(line: __LINE__)->createErrResponse();
+        }
+
+        if (!PasswordEncoder::matches($dto->getPassword(), $user['password_hash'])) {
+            return new InvalidCredentials(line: __LINE__)->createErrResponse();
+        }
+
+        $response = new LoginResponseDTO(JWT::generateToken(UserDTO::fromArray($user)));
+
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 
     /**
