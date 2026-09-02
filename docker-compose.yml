@@ -1,0 +1,16 @@
+services:
+  backend:
+    build: .
+    ports: 
+      - "8088:8088"
+    depends_on:
+      - pgsqldb
+
+  pgsqldb:
+    image: postgres:latest
+    environment:
+          POSTGRES_DB: taskmgr
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          volumes:
+                - ./script.sql:/docker-entrypoint-initdb.d/0_scheme.sql
