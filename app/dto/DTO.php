@@ -2,17 +2,26 @@
 
 namespace ghosty\taskmgr\dto;
 use JsonSerializable;
+use ReflectionObject;
 
 abstract class DTO implements JsonSerializable
 {
     public function toArray(): array
     {
-        return get_object_vars($this);
+        $reflection = new ReflectionObject($this);
+        $vars = [];
+
+        foreach ($reflection->getProperties() as $property) {
+            $property->setAccessible(true);
+            $vars[$property->getName()] = $property->getValue($this);
+        }
+
+        return $vars;
     }
     abstract public static function fromArray(array $data): self;
 
     public function jsonSerialize(): array
     {
-        return get_object_vars($this);
+        return self::toArray();
     }
 }

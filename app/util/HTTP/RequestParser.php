@@ -28,7 +28,6 @@ class RequestParser
     {
         $bodyStr = $this->request->getBody();
         $bodyAssoc = empty($bodyStr) || trim($bodyStr) === '' ? [] : json_decode($bodyStr, true);
-        $bodyAssoc = is_array($bodyAssoc) ? $bodyAssoc : [];
 
         $uriData = self::parseURI($this->request->getUri(), $this->template);
 
@@ -43,29 +42,28 @@ class RequestParser
      */
     private static function parseURI(string $uri, string $template): array
     {
-        if (!str_contains($uri, '/')) {
-            return [];
-        }
-
         $template = explode(' ', $template)[1];
         $placeholders = [];
         $queryParams = [];
         $pathVars = [];
+        $keyValPairs = [];
 
-        foreach (explode('/', $template) as $part) {
-            if (str_contains($part, '{')) {
-                $var_name = substr($part, 1, strlen($part) - 2);
+
+        // extract variable names into an array
+        foreach (explode('/', $template) as $templatePart) {
+            if (str_contains($templatePart, '{')) {
+                $var_name = substr($templatePart, 1, strlen($templatePart) - 2);
                 $placeholders[] = $var_name;
             }
         }
 
-        foreach (explode('/', $uri) as $part) {
-            if (is_numeric($part)) {
-                $pathVars[] = (int) $part;
+        foreach (explode('/', $uri) as $uriPart) {
+            if (is_numeric($uriPart)) {
+                $pathVars[] = (int) $uriPart;
             }
 
-            if (str_contains($part, '?')) {
-                foreach(explode('&', substr($part, strpos($part, '?') + 1)) as $keyValStr) {
+            if (str_contains($uriPart, '?')) {
+                foreach(explode('&', substr($uriPart, strpos($uriPart, '?') + 1)) as $keyValStr) {
                     $keyVal = explode('=', $keyValStr);
                     $queryParams[$keyVal[0]] = $keyVal[1];
                 }
@@ -82,8 +80,6 @@ class RequestParser
         }
 
         $pathVars = $keyValPairs;
-
-        $pathVars = empty($pathVars) ? [] : $pathVars;
 
         return $pathVars + $queryParams;
     }
