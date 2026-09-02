@@ -53,7 +53,7 @@ class JWT
             return (array) $decoded;
         } catch (\Firebase\JWT\ExpiredException $e) {
             throw new ExpiredTokenException($e, __LINE__);
-        } catch (\Firebase\JWT\SignatureInvalidException | \DomainException $ex) {
+        } catch (\Firebase\JWT\SignatureInvalidException | \DomainException | \UnexpectedValueException $ex) {
             throw new InvalidTokenException($ex, __LINE__);
         }
     }

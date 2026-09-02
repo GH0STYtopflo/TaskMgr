@@ -2,6 +2,7 @@
 
 namespace ghosty\taskmgr\bridge;
 
+use ghosty\taskmgr\bridge\authentication\Authentication;
 use ghosty\taskmgr\controllers\CategoryController;
 use ghosty\taskmgr\controllers\CommentController;
 use ghosty\taskmgr\controllers\SubtaskController;
@@ -40,7 +41,10 @@ class Init
         $taskCtl = new TaskController($taskModel, $userModel, $catModel);
         $userCtl = new UserController($userModel, $taskModel);
 
+        // Auth
+        $authentication = new Authentication($userModel);
+
         // Finally return a router obj
-        return new Router($catCtl, $userCtl, $taskCtl, $subCtl, $comCtl);
+        return new Router($authentication, $catCtl, $userCtl, $taskCtl, $subCtl, $comCtl);
     }
 }

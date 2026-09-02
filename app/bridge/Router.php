@@ -2,6 +2,7 @@
 
 namespace ghosty\taskmgr\bridge;
 
+use ghosty\taskmgr\bridge\authentication\Authentication;
 use ghosty\taskmgr\controllers\CategoryController;
 use ghosty\taskmgr\controllers\CommentController;
 use ghosty\taskmgr\controllers\SubtaskController;
@@ -9,6 +10,8 @@ use ghosty\taskmgr\controllers\TaskController;
 use ghosty\taskmgr\controllers\UserController;
 use ghosty\taskmgr\dto\Request;
 use ghosty\taskmgr\dto\Response;
+use ghosty\taskmgr\exceptions\ExceptionTemplate;
+use ghosty\taskmgr\exceptions\RouteAccessNotAllowed;
 use ghosty\taskmgr\exceptions\RouteNotFoundException;
 use ghosty\taskmgr\util\HTTP\Headers;
 use ghosty\taskmgr\util\HTTP\RequestParser;
@@ -16,6 +19,7 @@ use ghosty\taskmgr\util\HTTP\RequestParser;
 class Router
 {
     private array $routes;
+    private Authentication $authentication;
     private CategoryController $categoryController;
     private UserController $userController;
     private TaskController $taskController;
@@ -27,8 +31,20 @@ class Router
     {
         foreach (array_keys($this->routes) as $route) {
             if (self::matches($request->getMethod() . ' ' . $request->getUri(), $route)) {
+                if ($this->routes[$route][1]) {
+                    try {
+                        $context = $this->authentication->authenticate($request->getHeaders());
+                    } catch (ExceptionTemplate $e) {
+                        return $e->createErrResponse();
+                    }
+                }
+
+                if ($this->routes[$route][2] && !$context->isAdmin()) {
+                    return new RouteAccessNotAllowed($route, line: __LINE__)->createErrResponse();
+                }
+
                 $parser = new RequestParser($request, $route);
-                return $this->routes[$route]($parser->getData());
+                return $this->routes[$route][0]($parser->getData());
             }
         }
 
@@ -113,6 +129,8 @@ class Router
      * @param CommentController $commentController
      */
     public function __construct(
+        Authentication $authentication,
+
         CategoryController $categoryController,
         UserController     $userController,
         TaskController     $taskController,
@@ -120,149 +138,154 @@ class Router
         CommentController  $commentController
     )
     {
+        $this->authentication = $authentication;
+
         $this->categoryController = $categoryController;
         $this->userController = $userController;
         $this->taskController = $taskController;
         $this->subTaskController = $subTaskController;
         $this->commentController = $commentController;
 
+        // scheme: 'METHOD ROUTE' => [function, must have token, must be admin]
         $this->routes = [
             // Test
-            'GET /test' => function(array $data): Response {
+            'GET /test' => [function(array $data): Response {
                 return self::test($data);
-            },
+            }, false, false],
 
             // Login
-            'POST /login' => function(array $data): Response {
+            'POST /login' => [function(array $data): Response {
                 return $this->userController->login($data);
-            },
+            }, false, false],
+
+            // Signup
+            'POST /signup' => [function(array $data): Response {
+                return $this->userController->createUser($data);
+            }, false, false],
 
             // Category routes
-            'POST /categories' => function(array $data): Response {
+            'POST /categories' => [function(array $data): Response {
                 return $this->categoryController->createCategory($data);
-            },
-            'PATCH /categories/{id}' => function(array $data): Response {
+            }, true, true],
+            'PATCH /categories/{id}' => [function(array $data): Response {
                 return $this->categoryController->updateCategory($data);
-            },
-            'DELETE /categories/{id}' => function(array $data): Response {
+            }, true, true],
+            'DELETE /categories/{id}' => [function(array $data): Response {
                 return $this->categoryController->deleteCategory($data);
-            },
-            'GET /categories?query' => function(array $data): Response {
+            }, true, true],
+            'GET /categories?query' => [function(array $data): Response {
                 return $this->categoryController->searchCategory($data);
-            },
-            'GET /categories' => function(array $data): Response {
+            }, true, false],
+            'GET /categories' => [function(array $data): Response {
                 return $this->categoryController->getAllCategories();
-            },
-            'GET /categories/{id}' => function(array $data): Response {
+            }, true, false],
+            'GET /categories/{id}' => [function(array $data): Response {
                 return $this->categoryController->getCategoryById($data);
-            },
+            }, true, false],
 
             // Comment routes
-            'POST /comments' => function(array $data): Response {
+            'POST /comments' => [function(array $data): Response {
                 return $this->commentController->createComment($data);
-            },
-            'DELETE /comments/{id}' => function(array $data): Response {
+            }, true, false],
+            'DELETE /comments/{id}' => [function(array $data): Response {
                 return $this->commentController->deleteComment($data);
-            },
-            'PATCH /comments/{id}' => function(array $data): Response {
+            }, true, false],
+            'PATCH /comments/{id}' => [function(array $data): Response {
                 return $this->commentController->editComment($data);
-            },
-            'GET /users/{user_id}/comments' => function(array $data): Response {
+            }, true, false],
+            'GET /users/{user_id}/comments' => [function(array $data): Response {
                 return $this->commentController->getUserComments($data);
-            },
-            'GET /tasks/{task_id}/comments' => function(array $data): Response {
+            }, true, false],
+            'GET /tasks/{task_id}/comments' => [function(array $data): Response {
                 return $this->commentController->getTaskComments($data);
-            },
-            'GET /comments' => function(array $data): Response {
+            }, true, false],
+            'GET /comments' => [function(array $data): Response {
                 return $this->commentController->getAllComments($data);
-            },
-            'GET /comments/{id}' => function(array $data): Response {
+            }, true, true],
+            'GET /comments/{id}' => [function(array $data): Response {
                 return $this->commentController->getCommentById($data);
-            },
+            }, true, false],
 
             // Subtask routes
-            'POST /tasks/{task_id}/subtasks' => function(array $data): Response {
+            'POST /tasks/{task_id}/subtasks' => [function(array $data): Response {
                 return $this->subTaskController->createSubtask($data);
-            },
-            'DELETE /subtasks/{id}' => function(array $data): Response {
+            }, true, true],
+            'DELETE /subtasks/{id}' => [function(array $data): Response {
                 return $this->subTaskController->deleteSubtask($data);
-            },
-            'GET /subtasks/{id}' => function(array $data): Response {
+            }, true, true],
+            'GET /subtasks/{id}' => [function(array $data): Response {
                 return $this->subTaskController->getSubtaskById($data);
-            },
-            'GET /subtasks' => function(array $data): Response {
+            }, true, false],
+            'GET /subtasks' => [function(array $data): Response {
                 return $this->subTaskController->getAllSubtasks($data);
-            },
-            'GET /tasks/{task_id}/subtasks' => function(array $data): Response {
+            }, true, true],
+            'GET /tasks/{task_id}/subtasks' => [function(array $data): Response {
                 return $this->subTaskController->getTaskSubtasks($data);
-            },
-            'PATCH /subtasks/{id}' => function(array $data): Response {
+            }, true, false],
+            'PATCH /subtasks/{id}' => [function(array $data): Response {
                 return $this->subTaskController->updateSubtaskStatus($data);
-            },
-            'PUT /subtasks/{id}' => function(array $data): Response {
+            }, true, false],
+            'PUT /subtasks/{id}' => [function(array $data): Response {
                 return $this->subTaskController->updateSubtaskTitle($data);
-            },
-            'GET /subtasks?query' => function(array $data): Response {
+            }, true, true],
+            'GET /subtasks?query' => [function(array $data): Response {
                 return $this->subTaskController->searchSubtasks($data);
-            },
+            }, true, false],
 
             // Task routes
-            'POST /tasks' => function(array $data): Response {
+            'POST /tasks' => [function(array $data): Response {
                 return $this->taskController->createTask($data);
-            },
-            'DELETE /tasks/{id}' => function(array $data): Response {
+            }, true, true],
+            'DELETE /tasks/{id}' => [function(array $data): Response {
                 return $this->taskController->deleteTask($data);
-            },
-            'GET /tasks/{id}' => function(array $data): Response {
+            }, true, true],
+            'GET /tasks/{id}' => [function(array $data): Response {
                 return $this->taskController->getTaskById($data);
-            },
+            }, true, true],
             'GET /tasks' => function(array $data): Response {
                 return $this->taskController->getAllTasks();
             },
-            'PATCH /tasks/{id}' => function(array $data): Response {
+            'PATCH /tasks/{id}' => [function(array $data): Response {
                 return $this->taskController->updateTask($data);
-            },
-            'GET /tasks/search' => function(array $data): Response {
+            }, true, true],
+            'GET /tasks/search' => [function(array $data): Response {
                 return $this->taskController->searchTasksByTitle($data);
-            },
-            'POST /tasks/{task_id}/users' => function(array $data): Response {
+            }, true, true],
+            'POST /tasks/{task_id}/users' => [function(array $data): Response {
                 return $this->taskController->assignTaskToUser($data);
-            },
-            'DELETE /tasks/{task_id}/users' => function(array $data): Response {
+            }, true, true],
+            'DELETE /tasks/{task_id}/users' => [function(array $data): Response {
                 return $this->taskController->dischargeTaskFromUser($data);
-            },
-            'PATCH /tasks/{id}/update-status' => function(array $data): Response {
+            }, true, true],
+            'PATCH /tasks/{id}/update_status' => [function(array $data): Response {
                 return $this->taskController->updateTaskStatus($data);
-            },
-            'POST /tasks/{task_id}/categories' => function(array $data): Response {
+            }, true, false],
+            'POST /tasks/{task_id}/categories' => [function(array $data): Response {
                 return $this->taskController->addTaskCategory($data);
-            },
-            'DELETE /tasks/{task_id}/categories' => function(array $data): Response {
+            }, true, true],
+            'DELETE /tasks/{task_id}/categories' => [function(array $data): Response {
                 return $this->taskController->removeTaskCategory($data);
-            },
+            }, true, true],
 
             // User routes
-            'POST /signup' => function(array $data): Response {
-                return $this->userController->createUser($data);
-            },
-            'DELETE /users/{id}' => function(array $data): Response {
+            'DELETE /users/{id}' => [function(array $data): Response {
                 return $this->userController->deleteUser($data);
-            },
-            'GET /users/{id}' => function(array $data): Response {
+            }, true, true],
+            'GET /users/{id}' => [function(array $data): Response {
                 return $this->userController->getUserById($data);
-            },
-            'GET /users' => function(array $data): Response {
+            }, true, false],
+            'GET /users' => [function(array $data): Response {
                 return $this->userController->getAllUsers();
-            },
-            'PATCH /users/{id}/update_username' => function(array $data): Response {
+            }, true, true],
+            'PATCH /users/{id}/update_username' => [function(array $data): Response {
                 return $this->userController->updateUsername($data);
-            },
-            'PATCH /users/{id}/update_password' => function(array $data): Response {
+            }, true, false],
+            'PATCH /users/{id}/update_password' => [function(array $data): Response {
                 return $this->userController->updatePassword($data);
-            },
-            'GET /users/{id}/tasks' => function(array $data): Response {
+            }, true, false],
+            'GET /users/{id}/tasks' => [function(array $data): Response {
                 return $this->userController->getUserTasks($data);
-            },
+            }, true, false],
         ];
     }
 
