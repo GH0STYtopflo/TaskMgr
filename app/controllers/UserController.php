@@ -7,6 +7,7 @@ use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\dto\user\CreateUserDTO;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
 use ghosty\taskmgr\dto\user\LoginDTO;
+use ghosty\taskmgr\dto\user\LogoutDTO;
 use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
 use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
@@ -24,7 +25,6 @@ class UserController
     }
 
     // I should probably use attributes but PHPDoc will do just fine. I'm not planning on using reflection
-
     /**
      * Maps to: POST /sign-up
      *
@@ -59,6 +59,18 @@ class UserController
         }
 
         return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
+    }
+
+    public function logout(array $data): Response
+    {
+        try {
+            $dto = LogoutDto::fromArray($data);
+            $this->userService->logout($dto);
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
+        return Response::makeResponse(200, [Headers::TYPE_JSON]);
     }
 
     /**

@@ -48,12 +48,15 @@ class Init
         $taskModel = new TaskModel($handle);
         $userModel = new UserModel($handle);
 
+        // JWT handle
+        $jwt = new JWT(7200, 'random_secret_that_will_be_read_from_dotenv_file_just_making_this_long_enough');
+
         // Create Services
         $srvCategory = new CategoryService($catModel);
         $srvComment = new CommentService($comModel, $userModel, $taskModel);
         $srvSubtask = new SubTaskService($subModel, $taskModel);
         $srvTask = new TaskService($taskModel, $userModel, $catModel);
-        $srvUser = new UserService($userModel, $taskModel);
+        $srvUser = new UserService($userModel, $taskModel, $jwt, $handle);
 
         // Feed these models to controllers
         $catCtl = new CategoryController($srvCategory);
@@ -63,7 +66,7 @@ class Init
         $userCtl = new UserController($srvUser);
 
         // Auth
-        $authentication = new Authentication($userModel, new JWT(7200, 'random_secret_that_will_be_read_from_dotenv_file_just_making_this_long_enough'));
+        $authentication = new Authentication($userModel, $jwt, $handle);
 
         // Finally return a router obj
         return new Router($authentication, $catCtl, $userCtl, $taskCtl, $subCtl, $comCtl);

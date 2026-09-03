@@ -3,12 +3,14 @@
 namespace ghosty\taskmgr\services;
 
 use ghosty\taskmgr\bridge\authentication\JWT;
+use ghosty\taskmgr\database\DBHandle;
 use ghosty\taskmgr\dto\AuthorizationContext;
 use ghosty\taskmgr\dto\task\TaskDTO;
 use ghosty\taskmgr\dto\user\CreateUserDTO;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
 use ghosty\taskmgr\dto\user\LoginDTO;
 use ghosty\taskmgr\dto\user\LoginResponseDTO;
+use ghosty\taskmgr\dto\user\LogoutDTO;
 use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
 use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
 use ghosty\taskmgr\dto\user\UserDTO;
@@ -17,6 +19,7 @@ use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\InvalidCredentials;
 use ghosty\taskmgr\exceptions\UsernameExistsException;
+use ghosty\taskmgr\logger\Severity;
 use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\models\UserModel;
 use ghosty\taskmgr\util\PasswordEncoder;
@@ -26,10 +29,16 @@ class UserService
     private UserModel $userModel;
     private TaskModel $taskModel;
 
-    public function __construct(UserModel $userModel, TaskModel $taskModel)
+    private DBHandle $handle;
+
+    private JWT $jwt;
+
+    public function __construct(UserModel $userModel, TaskModel $taskModel, JWT $jwt, DBHandle $handle)
     {
         $this->userModel = $userModel;
         $this->taskModel = $taskModel;
+        $this->jwt = $jwt;
+        $this->handle = $handle;
     }
 
     public function createUser(CreateUserDTO $dto): UserDTO
@@ -59,7 +68,20 @@ class UserService
             throw new InvalidCredentials(line: __LINE__);
         }
 
-        return new LoginResponseDTO(JWT::generateToken(UserDTO::fromArray($user)));
+        return new LoginResponseDTO($this->jwt->generateToken(UserDTO::fromArray($user)));
+    }
+
+    // This defeats the whole point of jwt auth, but it's required in the project specifications
+    public function logout(LogoutDTO $dto): void
+    {
+        try {
+            $this->handle->preparedStatement(
+                "INSERT INTO token_black_list (token) VALUES (:token)",
+                $dto->toArray()
+            );
+        } catch (DatabaseException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
     }
 
     public function deleteUser(FindUserByIdDTO $dto, AuthorizationContext $context): void

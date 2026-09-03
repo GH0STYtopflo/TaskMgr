@@ -57,6 +57,10 @@ CREATE TABLE IF NOT EXISTS task_categories (
     CONSTRAINT pk_task_categories PRIMARY KEY (task_id, category_id)
 );
 
+CREATE TABLE IF NOT EXISTS token_black_list (
+    token VARCHAR NOT NULL
+);
+
 CREATE INDEX idx_tasks_priority ON tasks(priority);
 CREATE INDEX idx_tasks_title ON tasks(title);
 CREATE INDEX idx_tasks_deadline ON tasks(deadline);
@@ -69,3 +73,4 @@ CREATE INDEX idx_comments_user_id ON users(id);
 CREATE INDEX idx_comments_task_id ON tasks(id);
 
 CREATE INDEX idx_categories_title ON categories(title);
+CREATE INDEX idx_token_black_list ON token_black_list(token);
