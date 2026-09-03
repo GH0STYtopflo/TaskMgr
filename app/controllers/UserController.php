@@ -8,6 +8,7 @@ use ghosty\taskmgr\dto\user\CreateUserDTO;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
 use ghosty\taskmgr\dto\user\LoginDTO;
 use ghosty\taskmgr\dto\user\LogoutDTO;
+use ghosty\taskmgr\dto\user\SearchUserDTO;
 use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
 use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
@@ -120,6 +121,24 @@ class UserController
     {
         try {
             $response = $this->userService->getAllUsers();
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
+    }
+
+    /**
+     * Maps to: GET /users?query
+     *
+     * @param array $data
+     * @return Response
+     */
+    public function searchUsers(array $data): Response
+    {
+        try {
+            $dto = SearchUserDto::fromArray($data);
+            $response = $this->userService->searchUsers($dto);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }

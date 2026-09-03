@@ -167,4 +167,14 @@ class SearchTaskDTO extends DTO
     {
         return $this->updated_after;
     }
+
+    public function getPage(): int
+    {
+        return $this->page;
+    }
+
+    public function getLimit(): int
+    {
+        return $this->limit;
+    }
 }

@@ -118,10 +118,19 @@ class UserModel extends Model
 
     public function search(DTO $data): array
     {
+        $data = $data->toArray();
+
+        $data['offset'] = ($data['page'] - 1) * $data['limit'];
+        unset($data['page']);
+
         try {
             return $this->handle->preparedStatement(
-                "SELECT * FROM users WHERE (:username IS NULL OR username LIKE :username)",
-                $data->toArray()
+                "SELECT * FROM users WHERE 
+                        (:username IS NULL OR username LIKE :username) AND
+                        (:is_admin IS NULL OR is_admin LIKE :is_admin)
+                        LIMIT :limit 
+                        OFFSET :offset",
+                $data
             )->fetchAll();
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);

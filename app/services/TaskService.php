@@ -102,7 +102,7 @@ class TaskService
         return TaskDTO::fromArray($affected);
     }
 
-    public function searchByTitle(SearchTaskDTO $dto): array
+    public function search(SearchTaskDTO $dto): array
     {
         $tasks = $this->taskModel->search($dto);
 

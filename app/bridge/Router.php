@@ -161,7 +161,7 @@ class Router
                 return $this->taskController->updateTask($data);
             }, true, true],
             'GET /tasks?query' => [function (array $data, AuthorizationContext $context): Response {
-                return $this->taskController->searchTasksByTitle($data);
+                return $this->taskController->searchTasks($data);
             }, true, true],
             'POST /tasks/{task_id}/users' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->taskController->assignTaskToUser($data);
@@ -191,6 +191,9 @@ class Router
             }, true, false],
             'GET /users' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->userController->getAllUsers();
+            }, true, true],
+            'GET /users?query' => [function (array $data, AuthorizationContext $context): Response {
+                return $this->userController->searchUsers($data);
             }, true, true],
             'PATCH /users/{id}:update_username' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->userController->updateUsername($data, $context);

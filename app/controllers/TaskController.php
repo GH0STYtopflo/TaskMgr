@@ -114,16 +114,16 @@ class TaskController
     }
 
     /**
-     * Maps to: GET /tasks/search
+     * Maps to: GET /tasks?query
      *
      * @param array $data
      * @return Response
      */
-    public function searchTasksByTitle(array $data): Response
+    public function searchTasks(array $data): Response
     {
         try {
             $dto = SearchTaskDTO::fromArray($data);
-            $response = $this->taskService->searchByTitle($dto);
+            $response = $this->taskService->search($dto);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }

@@ -11,6 +11,7 @@ use ghosty\taskmgr\dto\user\FindUserByIdDTO;
 use ghosty\taskmgr\dto\user\LoginDTO;
 use ghosty\taskmgr\dto\user\LoginResponseDTO;
 use ghosty\taskmgr\dto\user\LogoutDTO;
+use ghosty\taskmgr\dto\user\SearchUserDTO;
 use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
 use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
 use ghosty\taskmgr\dto\user\UserDTO;
@@ -160,5 +161,16 @@ class UserService
         }
 
         return $tasks;
+    }
+
+    public function searchUsers(SearchUserDTO $dto): array
+    {
+        $users = $this->userModel->search($dto);
+
+        foreach ($users as &$user) {
+            $user = UserDTO::fromArray($user);
+        }
+
+        return $users;
     }
 }
