@@ -3,6 +3,7 @@
 namespace ghosty\taskmgr\controllers;
 
 use Exception;
+use ghosty\taskmgr\dto\AuthorizationContext;
 use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\dto\task\AddAndRemoveTaskCategory;
@@ -13,6 +14,7 @@ use ghosty\taskmgr\dto\task\SearchTaskByTitleDTO;
 use ghosty\taskmgr\dto\task\TaskDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskStatusDTO;
+use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
@@ -20,6 +22,7 @@ use ghosty\taskmgr\exceptions\MalformedDateException;
 use ghosty\taskmgr\exceptions\MissingParamException;
 use ghosty\taskmgr\exceptions\TypeMismatchException;
 use ghosty\taskmgr\models\CategoryModel;
+use ghosty\taskmgr\models\SubTaskModel;
 use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\util\HTTP\Headers;
 use ghosty\taskmgr\models\UserModel;
@@ -237,12 +240,16 @@ class TaskController
      * @param array $data
      * @return Response
      */
-    public function updateTaskStatus(array $data): Response
+    public function updateTaskStatus(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = UpdateTaskStatusDTO::fromArray($data);
         } catch (TypeMismatchException $e) {
             $e->createErrResponse();
+        }
+
+        if (!$this->taskModel->isUserAssignedToTask($context->getId(), $dto->getTaskId())) {
+            return new AccessingNonAuthorizedResourceException(line: __LINE__)->createErrResponse();
         }
 
         try {

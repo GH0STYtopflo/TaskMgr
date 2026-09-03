@@ -178,4 +178,22 @@ class SubTaskModel extends Model
             );
         }
     }
+
+    public function getSubtaskTaskId(int $subTaskId): int
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT sub_tasks.task_id FROM sub_tasks WHERE id = :id",
+                ['id' => $subTaskId]
+            )->fetchColumn();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
+    }
 }

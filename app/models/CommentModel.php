@@ -161,4 +161,22 @@ class CommentModel extends Model
             );
         }
     }
+
+    public function isAuthor(int $userId, int $commentId): int
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT EXISTS(SELECT 1 FROM comments WHERE id = :id AND user_id = :user_id)",
+                ['id' => $commentId, 'user_id' => $userId]
+            )->fetchColumn();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace ghosty\taskmgr\controllers;
 
+use ghosty\taskmgr\dto\AuthorizationContext;
 use ghosty\taskmgr\dto\comment\CommentDTO;
 use ghosty\taskmgr\dto\comment\CreateCommentDTO;
 use ghosty\taskmgr\dto\comment\EditCommentDTO;
@@ -11,6 +12,7 @@ use ghosty\taskmgr\dto\comment\GetUserCommentsDTO;
 use ghosty\taskmgr\dto\comment\TaskCommentDTO;
 use ghosty\taskmgr\dto\comment\UserCommentDTO;
 use ghosty\taskmgr\dto\Response;
+use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
@@ -43,7 +45,7 @@ class CommentController
      * @param array $data
      * @return Response
      */
-    public function createComment(array $data): Response
+    public function createComment(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = CreateCommentDTO::fromArray($data);
@@ -67,6 +69,10 @@ class CommentController
             )->createErrResponse();
         }
 
+        if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getTaskId()))) {
+            return new AccessingNonAuthorizedResourceException(line: __LINE__)->createErrResponse();
+        }
+
         try {
             $this->commentModel->insert($dto);
         } catch (DatabaseException $e) {
@@ -85,12 +91,22 @@ class CommentController
      * @param array $data
      * @return Response
      */
-    public function deleteComment(array $data): Response
+    public function deleteComment(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindCommentByIdDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        try {
+            $isAuthor = $this->commentModel->isAuthor($context->getId(), $dto->getId());
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $isAuthor)) {
+            return new AccessingNonAuthorizedResourceException(line: __LINE__)->createErrResponse();
         }
 
         try {
@@ -111,12 +127,22 @@ class CommentController
      * @param array $data
      * @return Response
      */
-    public function editComment(array $data): Response
+    public function editComment(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = EditCommentDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        try {
+            $isAuthor = $this->commentModel->isAuthor($context->getId(), $dto->getId());
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $isAuthor)) {
+            return new AccessingNonAuthorizedResourceException(line: __LINE__)->createErrResponse();
         }
 
         try {
@@ -137,12 +163,16 @@ class CommentController
      * @param array $data
      * @return Response
      */
-    public function getUserComments(array $data): Response
+    public function getUserComments(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = GetUserCommentsDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $context->getId() == $dto->getUserId())) {
+            return new AccessingNonAuthorizedResourceException(line: __LINE__)->createErrResponse();
         }
 
         try {
@@ -168,12 +198,16 @@ class CommentController
      * @param array $data
      * @return Response
      */
-    public function getTaskComments(array $data): Response
+    public function getTaskComments(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = GetTaskCommentsDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getTaskId()))) {
+            return new AccessingNonAuthorizedResourceException(line: __LINE__)->createErrResponse();
         }
 
         try {
@@ -224,12 +258,22 @@ class CommentController
      * @param array $data
      * @return Response
      */
-    public function getCommentById(array $data): Response
+    public function getCommentById(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindCommentByIdDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        try {
+            $isAuthor = $this->commentModel->isAuthor($context->getId(), $dto->getId());
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $isAuthor)) {
+            return new AccessingNonAuthorizedResourceException(line: __LINE__)->createErrResponse();
         }
 
         try {

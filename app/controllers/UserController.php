@@ -3,6 +3,7 @@
 namespace ghosty\taskmgr\controllers;
 
 use ghosty\taskmgr\bridge\authentication\JWT;
+use ghosty\taskmgr\dto\AuthorizationContext;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\dto\task\TaskDTO;
 use ghosty\taskmgr\dto\user\CreateUserDTO;
@@ -12,6 +13,7 @@ use ghosty\taskmgr\dto\user\LoginResponseDTO;
 use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
 use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
 use ghosty\taskmgr\dto\user\UserDTO;
+use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
@@ -96,12 +98,16 @@ class UserController
      * @param array $data
      * @return Response
      */
-    public function deleteUser(array $data): Response
+    public function deleteUser(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindUserByIdDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $context->getId() == $data['id'])) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
         }
 
         try {
@@ -119,7 +125,7 @@ class UserController
      * @param array $data
      * @return Response
      */
-    public function getUserById(array $data): Response
+    public function getUserById(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindUserByIdDTO::fromArray($data);
@@ -131,6 +137,10 @@ class UserController
             $user = $this->userModel->findById($dto);
         } catch (DatabaseException $e) {
             return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $context->getId() == $user['id'])) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
         }
 
         return Response::makeResponse(200, [Headers::TYPE_JSON], is_null($user) ? null : UserDTO::fromArray($user));
@@ -162,12 +172,16 @@ class UserController
      * @param array $data
      * @return Response
      */
-    public function updateUsername(array $data): Response
+    public function updateUsername(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = UpdateUsernameDto::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $context->getId() == $data['id'])) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
         }
 
         try {
@@ -185,12 +199,16 @@ class UserController
      * @param array $data
      * @return Response
      */
-    public function updatePassword(array $data): Response
+    public function updatePassword(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = UpdatePasswordDto::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $context->getId() == $data['id'])) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
         }
 
         try {
@@ -208,12 +226,16 @@ class UserController
      * @param array $data
      * @return Response
      */
-    public function getUserTasks(array $data): Response
+    public function getUserTasks(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindUserByIdDTO::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $context->getId() == $data['id'])) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
         }
 
         if (!$this->userModel->existsById($dto->getId())) {

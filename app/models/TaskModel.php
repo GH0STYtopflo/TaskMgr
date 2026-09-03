@@ -272,4 +272,16 @@ class TaskModel extends Model
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
         }
     }
+
+    public function isUserAssignedToTask(int $userId, int $taskId): bool
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT EXISTS(SELECT 1 FROM user_tasks WHERE task_id = :task_id AND user_id = :user_id)",
+                ["task_id" => $taskId, "user_id" => $userId]
+            )->fetchColumn();
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
+    }
 }

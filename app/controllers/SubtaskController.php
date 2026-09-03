@@ -2,6 +2,7 @@
 
 namespace ghosty\taskmgr\controllers;
 
+use ghosty\taskmgr\dto\AuthorizationContext;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\dto\subtask\CreateSubtaskDTO;
 use ghosty\taskmgr\dto\subtask\SearchSubtaskDTO;
@@ -11,6 +12,7 @@ use ghosty\taskmgr\dto\subtask\GetTaskSubtask;
 use ghosty\taskmgr\dto\subtask\SetSubtaskStatusDTO;
 use ghosty\taskmgr\dto\subtask\SubtaskDTO;
 use ghosty\taskmgr\dto\task\TaskDTO;
+use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
 use ghosty\taskmgr\exceptions\SubtaskExistsException;
@@ -141,12 +143,16 @@ class SubtaskController
      * @param array $data
      * @return Response
      */
-    public function getTaskSubtasks(array $data): Response
+    public function getTaskSubtasks(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = GetTaskSubtask::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getTaskId()))) {
+            return new AccessingNonAuthorizedResourceException(line: __LINE__)->createErrResponse();
         }
 
         try {
@@ -168,12 +174,22 @@ class SubtaskController
      * @param array $data
      * @return Response
      */
-    public function updateSubtaskStatus(array $data): Response
+    public function updateSubtaskStatus(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = SetSubtaskStatusDto::fromArray($data);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
+        }
+
+        try {
+            $taskId = $this->subTaskModel->getSubtaskTaskId($dto->getId());
+        } catch (ExceptionTemplate $e) {
+            return $e->createErrResponse();
+        }
+
+        if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $taskId))) {
+            return new AccessingNonAuthorizedResourceException(line: __LINE__)->createErrResponse();
         }
 
         try {
