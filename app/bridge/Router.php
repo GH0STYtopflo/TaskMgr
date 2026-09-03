@@ -178,6 +178,9 @@ class Router
             'DELETE /tasks/{task_id}/categories' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->taskController->removeTaskCategory($data);
             }, true, true],
+            'GET /tasks/{id}/categories' => [function (array $data, AuthorizationContext $context): Response {
+                return $this->categoryController->getTaskCategories($data, $context);
+            }, true, false],
 
             // User routes
             'DELETE /users/{id}' => [function (array $data, AuthorizationContext $context): Response {

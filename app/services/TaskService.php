@@ -149,10 +149,9 @@ class TaskService
             throw new UpdatingTaskStatusToSubmittedException(line: __LINE__);
         }
 
-        throw_if(
-            $this->subtaskModel->taskHasActiveSubtask($dto->getId()) && $dto->getStatus() == TaskStatus::FINISHED,
-            new TaskHasActiveSubtasksException($dto->getId(), line: __LINE__)
-        );
+        if ($this->subtaskModel->taskHasActiveSubtask($dto->getId()) && $dto->getStatus() == TaskStatus::FINISHED) {
+            new TaskHasActiveSubtasksException($dto->getId(), line: __LINE__);
+        }
 
         $affected = $this->taskModel->update($dto);
 

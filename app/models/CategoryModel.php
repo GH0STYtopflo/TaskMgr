@@ -7,6 +7,7 @@ use ghosty\taskmgr\dto\category\CreateAndSearchCategoryDTO;
 use ghosty\taskmgr\dto\category\FindCategoryByIdDTO;
 use ghosty\taskmgr\dto\category\UpdateCategoryDTO;
 use ghosty\taskmgr\dto\DTO;
+use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\logger\Severity;
 use PDOException;
@@ -18,7 +19,7 @@ class CategoryModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(DTO | CreateAndSearchCategoryDTO $data): array
+    public function insert(DTO|CreateAndSearchCategoryDTO $data): array
     {
         try {
             return $this->handle->preparedStatement(
@@ -36,7 +37,7 @@ class CategoryModel extends Model
         }
     }
 
-    public function findById(DTO | FindCategoryByIdDTO $data): ?array
+    public function findById(DTO|FindCategoryByIdDTO $data): ?array
     {
         try {
             return $this->handle->preparedStatement(
@@ -69,7 +70,7 @@ class CategoryModel extends Model
         }
     }
 
-    public function update(DTO | UpdateCategoryDTO $data): array
+    public function update(DTO|UpdateCategoryDTO $data): array
     {
         try {
             return $this->handle->preparedStatement(
@@ -87,7 +88,7 @@ class CategoryModel extends Model
         }
     }
 
-    public function delete(DTO | FindCategoryByIdDTO $data): void
+    public function delete(DTO|FindCategoryByIdDTO $data): void
     {
         try {
             $this->handle->preparedStatement(
@@ -105,7 +106,7 @@ class CategoryModel extends Model
         }
     }
 
-    public function search(DTO | CreateAndSearchCategoryDTO $data): array
+    public function search(DTO|CreateAndSearchCategoryDTO $data): array
     {
         try {
             return $this->handle->preparedStatement(
@@ -157,5 +158,14 @@ class CategoryModel extends Model
                 __LINE__
             );
         }
+    }
+
+    public function getTaskCategories(FindTaskByIdDTO $dto): array
+    {
+        return $this->handle->preparedStatement(
+            "SELECT categories.*, task_id FROM categories JOIN task_categories ON 
+                        categories.id = task_categories.category_id WHERE task_id = :task_id",
+            ["task_id" => $dto->getId()]
+        )->fetchAll();
     }
 }

@@ -2,21 +2,28 @@
 
 namespace ghosty\taskmgr\services;
 
+use ghosty\taskmgr\dto\AuthorizationContext;
 use ghosty\taskmgr\dto\category\CategoryDTO;
 use ghosty\taskmgr\dto\category\CreateAndSearchCategoryDTO;
 use ghosty\taskmgr\dto\category\FindCategoryByIdDTO;
+use ghosty\taskmgr\dto\category\TaskCategoryDTO;
 use ghosty\taskmgr\dto\category\UpdateCategoryDTO;
+use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
+use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\CategoryExistsException;
 use ghosty\taskmgr\models\CategoryModel;
+use ghosty\taskmgr\models\TaskModel;
 
 class CategoryService
 {
     private CategoryModel $categoryModel;
+    private TaskModel $taskModel;
 
-    public function __construct(CategoryModel $categoryModel)
+    public function __construct(CategoryModel $categoryModel, TaskModel $taskModel)
     {
         $this->categoryModel = $categoryModel;
+        $this->taskModel = $taskModel;
     }
 
     public function createCategory(CreateAndSearchCategoryDTO $dto): CategoryDTO
@@ -99,5 +106,24 @@ class CategoryService
         }
 
         return CategoryDTO::fromArray($category);
+    }
+
+    public function getTaskCategories(FindTaskByIdDTO $dto, AuthorizationContext $context): array
+    {
+        if (!$this->taskModel->existsById($dto->getId())) {
+            new AccessingNonExistentRecordException($dto->getId(), 'tasks', line: __LINE__);
+        }
+
+        if ($this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId())) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
+        }
+
+        $taskCategories = $this->categoryModel->getTaskCategories($dto);
+
+        foreach ($taskCategories as &$category) {
+            $category = TaskCategoryDTO::fromArray($category);
+        }
+
+        return $taskCategories;
     }
 }
