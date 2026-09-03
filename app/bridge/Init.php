@@ -16,6 +16,11 @@ use ghosty\taskmgr\models\CommentModel;
 use ghosty\taskmgr\models\SubTaskModel;
 use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\models\UserModel;
+use ghosty\taskmgr\services\CategoryService;
+use ghosty\taskmgr\services\CommentService;
+use ghosty\taskmgr\services\SubtaskService;
+use ghosty\taskmgr\services\TaskService;
+use ghosty\taskmgr\services\UserService;
 
 class Init
 {
@@ -34,12 +39,19 @@ class Init
         $taskModel = new TaskModel($handle);
         $userModel = new UserModel($handle);
 
+        // Create Services
+        $srvCategory = new CategoryService($catModel);
+        $srvComment = new CommentService($comModel, $userModel, $taskModel);
+        $srvSubtask = new SubTaskService($subModel, $taskModel);
+        $srvTask = new TaskService($taskModel, $userModel, $catModel);
+        $srvUser = new UserService($userModel, $taskModel);
+
         // Feed these models to controllers
-        $catCtl = new CategoryController($catModel);
-        $comCtl = new CommentController($comModel, $userModel, $taskModel);
-        $subCtl = new SubTaskController($subModel, $taskModel);
-        $taskCtl = new TaskController($taskModel, $userModel, $catModel);
-        $userCtl = new UserController($userModel, $taskModel);
+        $catCtl = new CategoryController($srvCategory);
+        $comCtl = new CommentController($srvComment);
+        $subCtl = new SubTaskController($srvSubtask);
+        $taskCtl = new TaskController($srvTask);
+        $userCtl = new UserController($srvUser);
 
         // Auth
         $authentication = new Authentication($userModel);

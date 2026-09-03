@@ -3,14 +3,13 @@
 namespace ghosty\taskmgr\models;
 
 use ghosty\taskmgr\database\DBHandle;
-use ghosty\taskmgr\dto\user\CreateUserDTO;
 use ghosty\taskmgr\dto\DTO;
+use ghosty\taskmgr\dto\user\CreateUserDTO;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
 use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
 use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
-use ghosty\taskmgr\exceptions\UsernameExistsException;
 use ghosty\taskmgr\logger\Severity;
 use ghosty\taskmgr\util\PasswordEncoder;
 use PDOException;
@@ -22,13 +21,9 @@ class UserModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(CreateUserDTO | DTO $data): void
+    public function insert(CreateUserDTO | DTO $data): array
     {
-        $template = "INSERT INTO users (username, password_hash, is_admin) VALUES (:username, :password_hash, FALSE)";
-
-        if ($this->existsByUsername($data->getUsername())) {
-            throw new UsernameExistsException($data->getUsername(), __LINE__);
-        }
+        $template = "INSERT INTO users (username, password_hash, is_admin) VALUES (:username, :password_hash, FALSE) RETURNING id, username, is_admin";
 
         // encode user password to prevent storing plain_text
         $password_hash = PasswordEncoder::encode($data->getPassword());
@@ -39,7 +34,7 @@ class UserModel extends Model
         unset($data['password']);
 
         try {
-            $this->handle->preparedStatement($template, $data);
+            return $this->handle->preparedStatement($template, $data)->fetch();
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
         }
@@ -69,7 +64,7 @@ class UserModel extends Model
         }
     }
 
-    public function update(DTO | UpdateUsernameDTO | UpdatePasswordDTO $data): void
+    public function update(DTO | UpdateUsernameDTO | UpdatePasswordDTO $data): array
     {
         if (!$this->existsById($data->getId())) {
             throw new AccessingNonExistentRecordException($data->getId(), 'users', line: __LINE__);
@@ -89,17 +84,20 @@ class UserModel extends Model
         unset($data['new_username']);
 
         try {
-            $this->handle->preparedStatement(
+            $affected = $this->handle->preparedStatement(
                 "UPDATE users SET 
                  username = COALESCE(:username, username), 
                  password_hash = COALESCE(:password_hash, password_hash), 
                  is_admin = COALESCE(:is_admin, is_admin)
-                 WHERE id = :id",
+                 WHERE id = :id
+                 RETURNING id, username, is_admin",
                 $data
-            );
+            )->fetch();
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
         }
+
+        return $affected;
     }
 
     public function delete(FindUserByIdDTO | DTO $data): void
@@ -142,7 +140,7 @@ class UserModel extends Model
         }
     }
 
-    private function existsByUsername(string $username): bool
+    public function existsByUsername(string $username): bool
     {
         try {
             return $this->handle->preparedStatement(

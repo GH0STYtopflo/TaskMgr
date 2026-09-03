@@ -2,8 +2,6 @@
 
 namespace ghosty\taskmgr\database\custom_types;
 
-use Stringable;
-
 enum TaskStatus: string
 {
     case SUBMITTED = 'SUBMITTED';

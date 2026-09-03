@@ -2,40 +2,29 @@
 
 namespace ghosty\taskmgr\controllers;
 
-use ghosty\taskmgr\bridge\authentication\JWT;
 use ghosty\taskmgr\dto\AuthorizationContext;
 use ghosty\taskmgr\dto\Response;
-use ghosty\taskmgr\dto\task\TaskDTO;
 use ghosty\taskmgr\dto\user\CreateUserDTO;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
 use ghosty\taskmgr\dto\user\LoginDTO;
-use ghosty\taskmgr\dto\user\LoginResponseDTO;
 use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
 use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
-use ghosty\taskmgr\dto\user\UserDTO;
-use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
-use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
-use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
-use ghosty\taskmgr\exceptions\InvalidCredentials;
 use ghosty\taskmgr\exceptions\MissingParamException;
-use ghosty\taskmgr\models\TaskModel;
-use ghosty\taskmgr\models\UserModel;
+use ghosty\taskmgr\services\UserService;
 use ghosty\taskmgr\util\HTTP\Headers;
-use ghosty\taskmgr\util\PasswordEncoder;
 
 class UserController
 {
-    private UserModel $userModel;
-    private TaskModel $taskModel;
+    private UserService $userService;
 
-    public function __construct(UserModel $userModel, TaskModel $taskModel)
+    public function __construct(UserService $userService)
     {
-        $this->userModel = $userModel;
-        $this->taskModel = $taskModel;
+        $this->userService = $userService;
     }
 
     // I should probably use attributes but PHPDoc will do just fine. I'm not planning on using reflection
+
     /**
      * Maps to: POST /sign-up
      *
@@ -46,17 +35,12 @@ class UserController
     {
         try {
             $dto = CreateUserDto::fromArray($data);
-        } catch (MissingParamException $e) {
-            return $e->createErrResponse();
-        }
-
-        try {
-            $this->userModel->insert($dto);
+            $response = $this->userService->createUser($dto);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(201, [Headers::TYPE_JSON]);
+        return Response::makeResponse(201, [Headers::TYPE_JSON], $response);
     }
 
     /**
@@ -69,25 +53,10 @@ class UserController
     {
         try {
             $dto = LoginDto::fromArray($data);
+            $response = $this->userService->login($dto);
         } catch (MissingParamException $e) {
             return $e->createErrResponse();
         }
-
-        try {
-            $user = $this->userModel->findByUsername($dto->getUsername());
-        } catch (DatabaseException $e) {
-            return $e->createErrResponse();
-        }
-
-        if (is_null($user)) {
-            return new InvalidCredentials(line: __LINE__)->createErrResponse();
-        }
-
-        if (!PasswordEncoder::matches($dto->getPassword(), $user['password_hash'])) {
-            return new InvalidCredentials(line: __LINE__)->createErrResponse();
-        }
-
-        $response = new LoginResponseDTO(JWT::generateToken(UserDTO::fromArray($user)));
 
         return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
@@ -96,22 +65,14 @@ class UserController
      * Maps to: DELETE /users/{id}
      *
      * @param array $data
+     * @param AuthorizationContext $context
      * @return Response
      */
     public function deleteUser(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindUserByIdDTO::fromArray($data);
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        if (!($context->isAdmin() || $context->getId() == $data['id'])) {
-            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
-        }
-
-        try {
-            $this->userModel->delete($dto);
+            $this->userService->deleteUser($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -123,27 +84,19 @@ class UserController
      * Maps to: GET /users/{id}
      *
      * @param array $data
+     * @param AuthorizationContext $context
      * @return Response
      */
     public function getUserById(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindUserByIdDTO::fromArray($data);
+            $response = $this->userService->getUserById($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        try {
-            $user = $this->userModel->findById($dto);
-        } catch (DatabaseException $e) {
-            return $e->createErrResponse();
-        }
-
-        if (!($context->isAdmin() || $context->getId() == $user['id'])) {
-            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
-        }
-
-        return Response::makeResponse(200, [Headers::TYPE_JSON], is_null($user) ? null : UserDTO::fromArray($user));
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 
     /**
@@ -154,65 +107,45 @@ class UserController
     public function getAllUsers(): Response
     {
         try {
-            $users = $this->userModel->findAll();
+            $response = $this->userService->getAllUsers();
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        foreach ($users as &$user) {
-            $user = UserDTO::fromArray($user);
-        }
-
-        return Response::makeResponse(200, [Headers::TYPE_JSON], $users);
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 
     /**
      * Maps to PATCH /users/{id}/update_username
      *
      * @param array $data
+     * @param AuthorizationContext $context
      * @return Response
      */
     public function updateUsername(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = UpdateUsernameDto::fromArray($data);
+            $response = $this->userService->updateUsername($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        if (!($context->isAdmin() || $context->getId() == $data['id'])) {
-            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
-        }
-
-        try {
-            $this->userModel->update($dto);
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 
     /**
      * Maps to: PATCH /users/{id}/update_password
      *
      * @param array $data
+     * @param AuthorizationContext $context
      * @return Response
      */
     public function updatePassword(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = UpdatePasswordDto::fromArray($data);
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        if (!($context->isAdmin() || $context->getId() == $data['id'])) {
-            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
-        }
-
-        try {
-            $this->userModel->update($dto);
+            $this->userService->updatePassword($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -224,34 +157,18 @@ class UserController
      * Maps to: GET /users/{id}/tasks
      *
      * @param array $data
+     * @param AuthorizationContext $context
      * @return Response
      */
     public function getUserTasks(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindUserByIdDTO::fromArray($data);
+            $response = $this->userService->getUserTasks($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        if (!($context->isAdmin() || $context->getId() == $data['id'])) {
-            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
-        }
-
-        if (!$this->userModel->existsById($dto->getId())) {
-            return new AccessingNonExistentRecordException($dto->getId(), 'users', line: __LINE__)->createErrResponse();
-        }
-
-        try {
-            $tasks = $this->taskModel->getUserTasks($dto);
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        foreach ($tasks as &$task) {
-            $task = TaskDTO::fromArray($task);
-        }
-
-        return Response::makeResponse(200, [Headers::TYPE_JSON], $tasks);
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 }

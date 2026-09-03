@@ -6,7 +6,7 @@ use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\exceptions\MissingParamException;
 use ghosty\taskmgr\exceptions\TypeMismatchException;
 
-class FindCategoryById extends DTO
+class FindCategoryByIdDTO extends DTO
 {
     private int $id;
 

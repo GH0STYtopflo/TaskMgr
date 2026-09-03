@@ -1,0 +1,142 @@
+<?php
+
+namespace ghosty\taskmgr\services;
+
+use ghosty\taskmgr\bridge\authentication\JWT;
+use ghosty\taskmgr\dto\AuthorizationContext;
+use ghosty\taskmgr\dto\task\TaskDTO;
+use ghosty\taskmgr\dto\user\CreateUserDTO;
+use ghosty\taskmgr\dto\user\FindUserByIdDTO;
+use ghosty\taskmgr\dto\user\LoginDTO;
+use ghosty\taskmgr\dto\user\LoginResponseDTO;
+use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
+use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
+use ghosty\taskmgr\dto\user\UserDTO;
+use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
+use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\exceptions\DatabaseException;
+use ghosty\taskmgr\exceptions\InvalidCredentials;
+use ghosty\taskmgr\exceptions\UsernameExistsException;
+use ghosty\taskmgr\models\TaskModel;
+use ghosty\taskmgr\models\UserModel;
+use ghosty\taskmgr\util\PasswordEncoder;
+
+class UserService
+{
+    private UserModel $userModel;
+    private TaskModel $taskModel;
+
+    public function __construct(UserModel $userModel, TaskModel $taskModel)
+    {
+        $this->userModel = $userModel;
+        $this->taskModel = $taskModel;
+    }
+
+    public function createUser(CreateUserDTO $dto): UserDTO
+    {
+        $created = $this->userModel->insert($dto);
+
+        if ($this->userModel->existsByUsername($dto->getUsername())) {
+            throw new UsernameExistsException($dto->getUsername(), __LINE__);
+        }
+
+        return UserDTO::fromArray($created);
+    }
+
+    public function login(LoginDTO $dto): LoginResponseDTO
+    {
+        try {
+            $user = $this->userModel->findByUsername($dto->getUsername());
+        } catch (DatabaseException $e) {
+            return $e->createErrResponse();
+        }
+
+        if (is_null($user)) {
+            throw new InvalidCredentials(line: __LINE__);
+        }
+
+        if (!PasswordEncoder::matches($dto->getPassword(), $user['password_hash'])) {
+            throw new InvalidCredentials(line: __LINE__);
+        }
+
+        return new LoginResponseDTO(JWT::generateToken(UserDTO::fromArray($user)));
+    }
+
+    public function deleteUser(FindUserByIdDTO $dto, AuthorizationContext $context): void
+    {
+        if (!($context->isAdmin() || $context->getId() == $dto->getId())) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
+        }
+
+        $this->userModel->delete($dto);
+    }
+
+    public function getUserById(FindUserByIdDTO $dto, AuthorizationContext $context): ?UserDTO
+    {
+        if (!($context->isAdmin() || $context->getId() == $dto->getId())) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
+        }
+
+        $user = $this->userModel->findById($dto);
+
+        if (is_null($user)) {
+            return null;
+        }
+
+        return UserDTO::fromArray($user);
+    }
+
+    public function getAllUSers(): array
+    {
+        $users = $this->userModel->findAll();
+
+        foreach ($users as &$user) {
+            $user = UserDTO::fromArray($user);
+        }
+
+        return $users;
+    }
+
+    public function updateUsername(UpdateUsernameDTO $dto, AuthorizationContext $context): UserDTO
+    {
+        if (!($context->isAdmin() || $context->getId() == $dto->getId())) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
+        }
+
+        if ($this->userModel->existsByUsername($dto->getNewUsername())) {
+            throw new UsernameExistsException($dto->getNewUsername(), __LINE__);
+        }
+
+        $affected = $this->userModel->update($dto);
+
+        return UserDTO::fromArray($affected);
+    }
+
+    public function updatePassword(UpdatePasswordDTO $dto, AuthorizationContext $context): void
+    {
+        if (!($context->isAdmin() || $context->getId() == $dto->getId())) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
+        }
+
+        $this->userModel->update($dto);
+    }
+
+    public function getUserTasks(FindUserByIdDTO $dto, AuthorizationContext $context): array
+    {
+        if (!($context->isAdmin() || $context->getId() == $dto->getId())) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
+        }
+
+        if (!$this->userModel->existsById($dto->getId())) {
+            throw new AccessingNonExistentRecordException($dto->getId(), 'users', line: __LINE__);
+        }
+
+        $tasks = $this->taskModel->getUserTasks($dto);
+
+        foreach ($tasks as &$task) {
+            $task = TaskDTO::fromArray($task);
+        }
+
+        return $tasks;
+    }
+}

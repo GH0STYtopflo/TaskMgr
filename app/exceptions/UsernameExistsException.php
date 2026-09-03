@@ -2,7 +2,6 @@
 
 namespace ghosty\taskmgr\exceptions;
 
-use ghosty\taskmgr\exceptions\ExceptionTemplate;
 use ghosty\taskmgr\logger\Severity;
 use Throwable;
 

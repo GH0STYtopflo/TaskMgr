@@ -17,15 +17,15 @@ abstract class Model
 
     abstract protected function insert(DTO $data);
 
-    abstract protected function findById(DTO $data): ?array;
+    abstract protected function findById(DTO $data);
 
     abstract protected function findAll(): array;
 
-    abstract protected function update(DTO $data): void;
+    abstract protected function update(DTO $data);
 
-    abstract protected function delete(DTO $data): void;
+    abstract protected function delete(DTO $data);
 
-    abstract protected function search(DTO $data): array;
+    abstract protected function search(DTO $data);
 
     abstract protected function existsById(int $id): bool;
 }

@@ -241,8 +241,8 @@ class Router
                 return $this->taskController->deleteTask($data);
             }, true, true],
             'GET /tasks/{id}' => [function(array $data, AuthorizationContext $context): Response {
-                return $this->taskController->getTaskById($data);
-            }, true, true],
+                return $this->taskController->getTaskById($data, $context);
+            }, true, false],
             'GET /tasks' => [function(array $data, AuthorizationContext $context): Response {
                 return $this->taskController->getAllTasks();
             }, true, true],

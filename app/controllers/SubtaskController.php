@@ -5,34 +5,22 @@ namespace ghosty\taskmgr\controllers;
 use ghosty\taskmgr\dto\AuthorizationContext;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\dto\subtask\CreateSubtaskDTO;
-use ghosty\taskmgr\dto\subtask\SearchSubtaskDTO;
-use ghosty\taskmgr\dto\subtask\UpdateSubtaskTitleDTO;
 use ghosty\taskmgr\dto\subtask\FindSubtaskById;
 use ghosty\taskmgr\dto\subtask\GetTaskSubtask;
+use ghosty\taskmgr\dto\subtask\SearchSubtaskDTO;
 use ghosty\taskmgr\dto\subtask\SetSubtaskStatusDTO;
-use ghosty\taskmgr\dto\subtask\SubtaskDTO;
-use ghosty\taskmgr\dto\task\TaskDTO;
-use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
-use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\dto\subtask\UpdateSubtaskTitleDTO;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
-use ghosty\taskmgr\exceptions\SubtaskExistsException;
-use ghosty\taskmgr\models\SubTaskModel;
-use ghosty\taskmgr\models\TaskModel;
+use ghosty\taskmgr\services\SubtaskService;
 use ghosty\taskmgr\util\HTTP\Headers;
 
 class SubtaskController
 {
-    private SubTaskModel $subTaskModel;
-    private TaskModel $taskModel;
+    private SubtaskService $subtaskService;
 
-    /**
-     * @param SubTaskModel $subTaskModel
-     * @param TaskModel $taskModel
-     */
-    public function __construct(SubTaskModel $subTaskModel, TaskModel $taskModel)
+    public function __construct(SubtaskService $subtaskService)
     {
-        $this->subTaskModel = $subTaskModel;
-        $this->taskModel = $taskModel;
+        $this->subtaskService = $subtaskService;
     }
 
     /**
@@ -45,27 +33,15 @@ class SubtaskController
     {
         try {
             $dto = CreateSubTaskDto::fromArray($data);
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        if ($this->subTaskModel->existsByTitle($dto->getTitle())) {
-            new SubtaskExistsException($dto->getTitle(), line: __LINE__)->createErrResponse();
-        }
-
-        if ($this->taskModel->existsById($dto->getTaskId())) {
-            new AccessingNonExistentRecordException($dto->getTaskID(), 'tasks', line: __LINE__)->createErrResponse();
-        }
-
-        try {
-            $this->subTaskModel->insert($dto);
+            $response = $this->subtaskService->createSubtask($dto);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
         return Response::makeResponse(
             200,
-            [Headers::TYPE_JSON]
+            [Headers::TYPE_JSON],
+            $response
         );
     }
 
@@ -79,12 +55,7 @@ class SubtaskController
     {
         try {
             $dto = FindSubtaskById::fromArray($data);
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        try {
-            $this->subTaskModel->delete($dto);
+            $this->subtaskService->deleteSubtask($dto);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -96,109 +67,73 @@ class SubtaskController
      * Maps to: GET /subtasks/{id}
      *
      * @param array $data
+     * @param AuthorizationContext $context
      * @return Response
      */
-    public function getSubtaskById(array $data): Response
+    public function getSubtaskById(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindSubtaskById::fromArray($data);
+            $response = $this->subtaskService->getSubtaskById($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        try {
-            $subtask = $this->subTaskModel->findById($dto->getId());
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        return Response::makeResponse(200, [Headers::TYPE_JSON], SubtaskDTO::fromArray($subtask));
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 
     /**
      * Maps to: GET /subtasks
      *
-     * @param array $data
      * @return Response
      */
-    public function getAllSubtasks(array $data): Response
+    public function getAllSubtasks(): Response
     {
         try {
-            $tasks = $this->subTaskModel->findAll();
+            $response = $this->subtaskService->getAllSubtasks();
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        foreach ($tasks as &$task) {
-            $task = TaskDTO::fromArray($task);
-        }
-
-
-        return Response::makeResponse(200, [Headers::TYPE_JSON], $tasks);
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 
     /**
      * Maps to: GET /tasks/{task_id}/subtasks
      *
      * @param array $data
+     * @param AuthorizationContext $context
      * @return Response
      */
     public function getTaskSubtasks(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = GetTaskSubtask::fromArray($data);
+            $response = $this->subtaskService->getTaskSubtasks($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getTaskId()))) {
-            return new AccessingNonAuthorizedResourceException(line: __LINE__)->createErrResponse();
-        }
-
-        try {
-            $subtasks = $this->subTaskModel->search($dto);
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        foreach ($subtasks as &$subtask) {
-            $subtask = SubtaskDTO::fromArray($subtask);
-        }
-
-        return Response::makeResponse(200, [Headers::TYPE_JSON], $subtasks);
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 
     /**
      * Maps to: PATCH /subtasks/{id}
      *
      * @param array $data
+     * @param AuthorizationContext $context
      * @return Response
      */
     public function updateSubtaskStatus(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = SetSubtaskStatusDto::fromArray($data);
+            $response = $this->subtaskService->updateSubtaskStatus($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        try {
-            $taskId = $this->subTaskModel->getSubtaskTaskId($dto->getId());
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $taskId))) {
-            return new AccessingNonAuthorizedResourceException(line: __LINE__)->createErrResponse();
-        }
-
-        try {
-            $this->subTaskModel->update($dto);
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 
     /**
@@ -211,17 +146,12 @@ class SubtaskController
     {
         try {
             $dto = UpdateSubtaskTitleDTO::fromArray($data);
+            $response = $this->subtaskService->updateSubtaskTitle($dto);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        try {
-            $this->subTaskModel->update($dto);
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        return Response::makeResponse(200, [Headers::TYPE_JSON]);
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 
     /**
@@ -234,20 +164,11 @@ class SubtaskController
     {
         try {
             $dto = SearchSubtaskDto::fromArray($data);
+            $response = $this->subtaskService->searchSubtasks($dto);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 
-        try {
-            $subtasks = $this->subTaskModel->search($dto);
-        } catch (ExceptionTemplate $e) {
-            return $e->createErrResponse();
-        }
-
-        foreach ($subtasks as &$subtask) {
-            $subtask = SubtaskDTO::fromArray($subtask);
-        }
-
-        return Response::makeResponse(200, [Headers::TYPE_JSON], $subtasks);
+        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 }

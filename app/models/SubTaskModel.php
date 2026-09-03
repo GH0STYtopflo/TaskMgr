@@ -8,7 +8,8 @@ use ghosty\taskmgr\dto\subtask\CreateSubtaskDTO;
 use ghosty\taskmgr\dto\subtask\FindSubtaskById;
 use ghosty\taskmgr\dto\subtask\GetTaskSubtask;
 use ghosty\taskmgr\dto\subtask\SearchSubtaskDTO;
-use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\dto\subtask\SetSubtaskStatusDTO;
+use ghosty\taskmgr\dto\subtask\UpdateSubtaskTitleDTO;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\SubtaskExistsException;
 use ghosty\taskmgr\logger\Severity;
@@ -21,17 +22,13 @@ class SubTaskModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(DTO | CreateSubtaskDTO $data): void
+    public function insert(DTO | CreateSubtaskDTO $data): array
     {
-        if ($this->existsByTitle($this->existsByTitle($data->getTitle()))) {
-            throw new SubtaskExistsException($data->getTitle(), line: __LINE__);
-        }
-
         try {
-            $this->handle->preparedStatement(
-                "INSERT INTO sub_tasks (title,task_id) VALUES (:title, :task_id)",
+            return $this->handle->preparedStatement(
+                "INSERT INTO sub_tasks (title,task_id) VALUES (:title, :task_id) RETURNING *",
                 $data->toArray()
-            );
+            )->fetch();
         } catch (PDOException $e) {
             throw new DatabaseException(
                 $e->getMessage(),
@@ -76,22 +73,20 @@ class SubTaskModel extends Model
         }
     }
 
-    public function update(DTO $data): void
+    public function update(DTO | SetSubtaskStatusDTO | UpdateSubtaskTitleDTO $data): array
     {
-        if (!$this->existsById($data->getId())) {
-            throw new AccessingNonExistentRecordException($data->getId(), 'sub_tasks', line: __LINE__);
-        }
-
-        if (!is_null($data->getTitle()) && $this->existsByTitle($data->getTitle())) {
+        if (!is_null($data->getTitle()) && $this->existsByTitleForTask($data->getTitle(), $data->getTaskId())) {
             throw new SubtaskExistsException($data->getTitle(), line: __LINE__);
         }
 
         try {
-            $this->handle->preparedStatement(
+            return $this->handle->preparedStatement(
                 "UPDATE sub_tasks SET 
                      title = COALESCE(:title, title),
-                     is_done = COALESCE(:is_done, is_done)",
-                $data->toArray());
+                     is_done = COALESCE(:is_done, is_done)
+                     WHERE id = :id
+                     RETURNING *",
+                $data->toArray())->fetch();
         } catch (PDOException $e) {
             throw new DatabaseException(
                 $e->getMessage(),
@@ -105,10 +100,6 @@ class SubTaskModel extends Model
 
     public function delete(DTO | FindSubtaskById $data): void
     {
-        if (!$this->existsById($data->getId())) {
-            throw new AccessingNonExistentRecordException($data->getId(), 'sub_tasks', line: __LINE__);
-        }
-
         try {
             $this->handle->preparedStatement("DELETE FROM sub_tasks WHERE id = :id", $data->toArray());
         } catch (PDOException $e) {
@@ -143,7 +134,7 @@ class SubTaskModel extends Model
         }
     }
 
-    protected function existsById(int $id): bool
+    public function existsById(int $id): bool
     {
         try {
             return $this->handle->preparedStatement(
@@ -161,12 +152,12 @@ class SubTaskModel extends Model
         }
     }
 
-    public function existsByTitle(string $title): bool
+    public function existsByTitleForTask(string $title, int $taskId): bool
     {
         try {
             return $this->handle->preparedStatement(
-                "SELECT EXISTS(SELECT 1 FROM sub_tasks WHERE title = :title)",
-                ['title' => $title]
+                "SELECT EXISTS(SELECT 1 FROM sub_tasks WHERE title = :title AND task_id = :task_id)",
+                ['title' => $title, 'task_id' => $taskId]
             )->fetchColumn();
         } catch (PDOException $e) {
             throw new DatabaseException(

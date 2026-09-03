@@ -8,7 +8,6 @@ use ghosty\taskmgr\dto\comment\FindCommentByIdDTO;
 use ghosty\taskmgr\dto\comment\GetTaskCommentsDTO;
 use ghosty\taskmgr\dto\comment\GetUserCommentsDTO;
 use ghosty\taskmgr\dto\DTO;
-use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\logger\Severity;
 use PDOException;
@@ -20,13 +19,13 @@ class CommentModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(DTO | CreateCommentDTO $data): void
+    public function insert(DTO | CreateCommentDTO $data): array
     {
         try {
-            $this->handle->preparedStatement(
-                "INSERT INTO comments (body, submission_time, user_id, task_id) VALUES (:body, now(), :user_id, :task_id)",
+            return $this->handle->preparedStatement(
+                "INSERT INTO comments (body, submission_time, user_id, task_id) VALUES (:body, now(), :user_id, :task_id) RETURNING *",
                 $data->toArray()
-        );
+        )->fetch();
         } catch (PDOException $e) {
             throw new DatabaseException(
                 $e->getMessage(),
@@ -75,23 +74,16 @@ class CommentModel extends Model
         }
     }
 
-    public function update(DTO $data): void
+    public function update(DTO $data): array
     {
-        if (!$this->existsById($data->getId())) {
-            throw new AccessingNonExistentRecordException(
-                $data->getId(),
-                'comments',
-                line: __LINE__
-            );
-        }
-
         try {
-            $this->handle->preparedStatement(
+            return $this->handle->preparedStatement(
                 "UPDATE comments SET 
                     body = COALESCE(:new_body, body)
-                WHERE id = :id",
+                WHERE id = :id
+                RETURNING *",
                 $data->toArray()
-            );
+            )->fetch();
         } catch (PDOException $e) {
             throw new DatabaseException(
                 $e->getMessage(),
@@ -105,10 +97,6 @@ class CommentModel extends Model
 
     public function delete(DTO | FindCommentByIdDTO $data): void
     {
-        if (!$this->existsById($data->getId())) {
-            throw new AccessingNonExistentRecordException($data->getId(), 'comments', line: __LINE__);
-        }
-
         try {
             $this->handle->preparedStatement(
                 "DELETE FROM comments WHERE id = :id",
@@ -144,7 +132,7 @@ class CommentModel extends Model
         }
     }
 
-    protected function existsById(int $id): bool
+    public function existsById(int $id): bool
     {
         try {
             return $this->handle->preparedStatement(

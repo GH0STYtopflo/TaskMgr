@@ -4,11 +4,9 @@ namespace ghosty\taskmgr\models;
 
 use ghosty\taskmgr\database\DBHandle;
 use ghosty\taskmgr\dto\category\CreateAndSearchCategoryDTO;
-use ghosty\taskmgr\dto\category\FindCategoryById;
+use ghosty\taskmgr\dto\category\FindCategoryByIdDTO;
 use ghosty\taskmgr\dto\category\UpdateCategoryDTO;
 use ghosty\taskmgr\dto\DTO;
-use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
-use ghosty\taskmgr\exceptions\CategoryExistsException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\logger\Severity;
 use PDOException;
@@ -20,20 +18,13 @@ class CategoryModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(DTO | CreateAndSearchCategoryDTO $data): void
+    public function insert(DTO | CreateAndSearchCategoryDTO $data): array
     {
-        if ($this->existsById($data->getTitle())) {
-            throw new CategoryExistsException(
-                $data->getTitle(),
-                line: __LINE__,
-            );
-        }
-
         try {
-            $this->handle->preparedStatement(
-                "INSERT INTO categories (title) VALUES (:title)",
+            return $this->handle->preparedStatement(
+                "INSERT INTO categories (title) VALUES (:title) RETURNING *",
                 $data->toArray()
-            );
+            )->fetch();
         } catch (PDOException $e) {
             throw new DatabaseException(
                 $e->getMessage(),
@@ -45,7 +36,7 @@ class CategoryModel extends Model
         }
     }
 
-    public function findById(DTO | FindCategoryById $data): ?array
+    public function findById(DTO | FindCategoryByIdDTO $data): ?array
     {
         try {
             return $this->handle->preparedStatement(
@@ -78,28 +69,13 @@ class CategoryModel extends Model
         }
     }
 
-    public function update(DTO | UpdateCategoryDTO $data): void
+    public function update(DTO | UpdateCategoryDTO $data): array
     {
-        if (!$this->existsById($data->getId())) {
-            throw new AccessingNonExistentRecordException(
-                $data->getId(),
-                'categories',
-                line: __LINE__,
-            );
-        }
-
-        if ($this->existsByTitle($data->getTitle())) {
-            throw new CategoryExistsException(
-                $data->getTitle(),
-                line: __LINE__
-            );
-        }
-
         try {
-            $this->handle->preparedStatement(
-                "UPDATE categories SET title = COALESCE(:new_title, title) WHERE id = :id",
+            return $this->handle->preparedStatement(
+                "UPDATE categories SET title = COALESCE(:new_title, title) WHERE id = :id RETURNING *",
                 $data->toArray()
-            );
+            )->fetch();
         } catch (PDOException $e) {
             throw new DatabaseException(
                 $e->getMessage(),
@@ -111,16 +87,8 @@ class CategoryModel extends Model
         }
     }
 
-    public function delete(DTO | FindCategoryById $data): void
+    public function delete(DTO | FindCategoryByIdDTO $data): void
     {
-        if (!$this->existsById($data->getId())) {
-            throw new AccessingNonExistentRecordException(
-                $data->getId(),
-                'categories',
-                line: __LINE__
-            );
-        }
-
         try {
             $this->handle->preparedStatement(
                 "DELETE FROM categories WHERE id = :id",
@@ -173,7 +141,7 @@ class CategoryModel extends Model
         }
     }
 
-    protected function existsByTitle(string $title): bool
+    public function existsByTitle(string $title): bool
     {
         try {
             return $this->handle->preparedStatement(
