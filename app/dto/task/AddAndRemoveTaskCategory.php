@@ -17,7 +17,7 @@ class AddAndRemoveTaskCategory extends DTO
         $this->task_id = $task_id;
     }
 
-    public static function fromArray(array $data): DTO
+    public static function fromArray(array $data): self
     {
         if (!isset($data["task_id"])) {
             throw new MissingParamException('task_id', line: __LINE__);

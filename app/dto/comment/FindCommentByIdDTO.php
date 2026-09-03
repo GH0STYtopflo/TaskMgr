@@ -19,7 +19,7 @@ class FindCommentByIdDTO extends DTO
     }
 
 
-    public static function fromArray(array $data): DTO
+    public static function fromArray(array $data): self
     {
         if (!isset($data["id"])) {
             throw new MissingParamException('id', line: __LINE__);

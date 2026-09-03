@@ -25,7 +25,7 @@ class CreateCommentDTO extends DTO
     }
 
 
-    public static function fromArray(array $data): DTO
+    public static function fromArray(array $data): self
     {
         if (!isset($data["body"])) {
             throw new MissingParamException('body', line: __LINE__);

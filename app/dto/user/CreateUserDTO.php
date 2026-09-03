@@ -21,7 +21,7 @@ class CreateUserDTO extends DTO
     }
 
 
-    public static function fromArray(array $data): DTO
+    public static function fromArray(array $data): self
     {
         if (!isset($data['username'])) {
             throw new MissingParamException('username', line: __LINE__);

@@ -27,7 +27,7 @@ class TaskCommentDTO extends DTO
     }
 
 
-    public static function fromArray(array $data): DTO
+    public static function fromArray(array $data): self
     {
         return new self(
             (int) $data['id'],

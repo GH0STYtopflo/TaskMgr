@@ -25,7 +25,7 @@ class SubtaskDTO extends DTO
         $this->task_id = $task_id;
     }
 
-    public static function fromArray(array $data): DTO
+    public static function fromArray(array $data): self
     {
         return new self($data["id"], $data["title"], $data["is_done"], $data["task_id"]);
     }

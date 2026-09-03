@@ -16,7 +16,7 @@ class LoginResponseDTO extends DTO
         $this->token = $token;
     }
 
-    public static function fromArray(array $data): DTO
+    public static function fromArray(array $data): self
     {
         return new self($data['token']);
     }

@@ -22,7 +22,7 @@ class UpdateTaskStatusDTO extends DTO
     }
 
 
-    public static function fromArray(array $data): DTO
+    public static function fromArray(array $data): self
     {
         try {
             $status = TaskStatus::from($data['status']);

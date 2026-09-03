@@ -22,7 +22,7 @@ class AssignAndDischargeTaskDTO extends DTO
     }
 
 
-    public static function fromArray(array $data): DTO
+    public static function fromArray(array $data): self
     {
         if (!isset($data['user_id'])) {
             throw new MissingParamException('user_id', line: __LINE__);
