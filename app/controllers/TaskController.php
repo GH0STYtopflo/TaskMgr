@@ -8,7 +8,7 @@ use ghosty\taskmgr\dto\task\AddAndRemoveTaskCategory;
 use ghosty\taskmgr\dto\task\AssignAndDischargeTaskDTO;
 use ghosty\taskmgr\dto\task\CreateTaskDTO;
 use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
-use ghosty\taskmgr\dto\task\SearchTaskByTitleDTO;
+use ghosty\taskmgr\dto\task\SearchTaskDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskStatusDTO;
 use ghosty\taskmgr\exceptions\ExceptionTemplate;
@@ -122,7 +122,7 @@ class TaskController
     public function searchTasksByTitle(array $data): Response
     {
         try {
-            $dto = SearchTaskByTitleDTO::fromArray($data);
+            $dto = SearchTaskDTO::fromArray($data);
             $response = $this->taskService->searchByTitle($dto);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();

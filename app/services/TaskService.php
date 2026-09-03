@@ -9,7 +9,7 @@ use ghosty\taskmgr\dto\task\AssignAndDischargeTaskDTO;
 use ghosty\taskmgr\dto\task\CategoryAdditionResponseDTO;
 use ghosty\taskmgr\dto\task\CreateTaskDTO;
 use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
-use ghosty\taskmgr\dto\task\SearchTaskByTitleDTO;
+use ghosty\taskmgr\dto\task\SearchTaskDTO;
 use ghosty\taskmgr\dto\task\TaskAssignmentResponseDTO;
 use ghosty\taskmgr\dto\task\TaskDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskDTO;
@@ -102,7 +102,7 @@ class TaskService
         return TaskDTO::fromArray($affected);
     }
 
-    public function searchByTitle(SearchTaskByTitleDTO $dto): array
+    public function searchByTitle(SearchTaskDTO $dto): array
     {
         $tasks = $this->taskModel->search($dto);
 

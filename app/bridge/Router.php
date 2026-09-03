@@ -160,7 +160,7 @@ class Router
             'PATCH /tasks/{id}' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->taskController->updateTask($data);
             }, true, true],
-            'GET /tasks/search' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /tasks?query' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->taskController->searchTasksByTitle($data);
             }, true, true],
             'POST /tasks/{task_id}/users' => [function (array $data, AuthorizationContext $context): Response {

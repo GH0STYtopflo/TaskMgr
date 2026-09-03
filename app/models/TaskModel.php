@@ -111,15 +111,34 @@ class TaskModel extends Model
 
     public function search(DTO $data): array
     {
+        $data = $data->toArray();
+        $data['deadline_before'] = $data['deadline_before']?->format(DATE_ATOM);
+        $data['deadline_after'] = $data['deadline_after']?->format(DATE_ATOM);
+        $data['created_before'] = $data['created_before']?->format(DATE_ATOM);
+        $data['created_after'] = $data['created_after']?->format(DATE_ATOM);
+        $data['updated_before'] = $data['updated_before']?->format(DATE_ATOM);
+        $data['updated_after'] = $data['updated_after']?->format(DATE_ATOM);
+        $data['status'] = $data['status']?->value;
+
+        $data['offset'] = ($data['page'] - 1) * $data['limit'];
+        unset($data['page']);
+
         try {
             return $this->handle->preparedStatement(
-                "SELECT * FROM tasks WHERE 
-                        (:title IS NULL OR title LIKE :title) AND
-                        (:priority IS NULL OR priority = :priority) AND
-                        (:deadline IS NULL OR deadline = :deadline) AND
-                        (:status IS NULL OR status = :status) AND
-                        (:created_at IS NULL OR created_at = :created_at)",
-                $data->toArray()
+                "SELECT * FROM tasks WHERE
+                (:title IS NULL OR title LIKE :title) AND 
+                (:priority_higher IS NULL OR priority >= :priority_higer) AND
+                (:priority_lower IS NULL OR priority >= :priority_lower) AND
+                (:deadline_before IS NULL OR deadline <= :deadline_before)AND 
+                (:deadline_after IS NULL OR deadline >= :deadline_after) AND
+                (:status IS NULL OR status = :status) AND 
+                (:created_before IS NULL OR created_at <= :created_before) AND
+                (:created_after IS NULL OR created_at >= :created_after) AND
+                (:updated_before IS NULL OR updated_at <= :updated_before) AND
+                (:updated_after IS NULL OR updated_at >= :updated_after)
+                LIMIT :limit 
+                OFFSET :offset",
+                $data
             )->fetchAll();
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
