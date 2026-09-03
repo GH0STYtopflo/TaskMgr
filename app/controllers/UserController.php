@@ -128,7 +128,7 @@ class UserController
     }
 
     /**
-     * Maps to PATCH /users/{id}/update_username
+     * Maps to PATCH /users/{id}:update_username
      *
      * @param array $data
      * @param AuthorizationContext $context
@@ -147,7 +147,7 @@ class UserController
     }
 
     /**
-     * Maps to: PATCH /users/{id}/update_password
+     * Maps to: PATCH /users/{id}:update_password
      *
      * @param array $data
      * @param AuthorizationContext $context

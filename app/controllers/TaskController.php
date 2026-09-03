@@ -167,7 +167,7 @@ class TaskController
     }
 
     /**
-     * Maps to: PATCH /tasks/{id}/update-status
+     * Maps to: PATCH /tasks/{id}:update_status
      *
      * @param array $data
      * @param AuthorizationContext $context

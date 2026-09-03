@@ -169,7 +169,7 @@ class Router
             'DELETE /tasks/{task_id}/users' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->taskController->dischargeTaskFromUser($data);
             }, true, true],
-            'PATCH /tasks/{id}/update_status' => [function (array $data, AuthorizationContext $context): Response {
+            'PATCH /tasks/{id}:update_status' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->taskController->updateTaskStatus($data, $context);
             }, true, false],
             'POST /tasks/{task_id}/categories' => [function (array $data, AuthorizationContext $context): Response {
@@ -192,18 +192,16 @@ class Router
             'GET /users' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->userController->getAllUsers();
             }, true, true],
-            'PATCH /users/{id}/update_username' => [function (array $data, AuthorizationContext $context): Response {
+            'PATCH /users/{id}:update_username' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->userController->updateUsername($data, $context);
             }, true, false],
-            'PATCH /users/{id}/update_password' => [function (array $data, AuthorizationContext $context): Response {
+            'PATCH /users/{id}:update_password' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->userController->updatePassword($data, $context);
             }, true, false],
             'GET /users/{id}/tasks' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->userController->getUserTasks($data, $context);
             }, true, false],
         ];
-
-
     }
     public function route(Request $request): Response
     {
@@ -252,6 +250,22 @@ class Router
         }
 
         for ($i = 0; $i < count($templateParts); $i++) {
+            if (str_contains($templateParts[$i], ':')) {
+                if (!str_contains($reqRouteParts[$i], ':')) {
+                    return false;
+                }
+
+                if (explode(':', $templateParts[$i])[1] !== explode(':', $reqRouteParts[$i])[1]) {
+                    var_dump(explode(':', $reqRouteParts[$i])[1]);
+                    var_dump(explode(':', $templateParts[$i])[1]);
+                    return false;
+                }
+
+                $templateParts[$i] = explode(':', $templateParts[$i])[0];
+                $reqRouteParts[$i] = explode(':', $reqRouteParts[$i])[0];
+            }
+
+
             if (str_contains($templateParts[$i], '{')) {
                 if (!is_numeric($reqRouteParts[$i])) {
                     return false;

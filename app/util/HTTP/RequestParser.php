@@ -51,6 +51,10 @@ class RequestParser
 
         // extract variable names into an array
         foreach (explode('/', $template) as $templatePart) {
+            if (str_contains(':', $templatePart)) {
+                $templatePart = explode(':', $templatePart)[0];
+            }
+
             if (str_contains($templatePart, '{')) {
                 $var_name = substr($templatePart, 1, strlen($templatePart) - 2);
                 $placeholders[] = $var_name;
@@ -58,6 +62,10 @@ class RequestParser
         }
 
         foreach (explode('/', $uri) as $uriPart) {
+            if (str_contains(':', $uriPart)) {
+                $uriPart = explode(':', $uriPart)[0];
+            }
+
             if (is_numeric($uriPart)) {
                 $pathVars[] = (int) $uriPart;
             }
