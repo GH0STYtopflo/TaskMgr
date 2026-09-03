@@ -3,6 +3,7 @@
 namespace ghosty\taskmgr\dto\comment;
 
 use DateTimeImmutable;
+use DateTimeZone;
 use ghosty\taskmgr\dto\DTO;
 
 class TaskCommentDTO extends DTO
@@ -32,7 +33,7 @@ class TaskCommentDTO extends DTO
         return new self(
             (int) $data['id'],
             $data['body'],
-            new DateTimeImmutable($data['submission_time']),
+            new DateTimeImmutable($data['submission_time'], new DateTimeZone('Asia/Tehran')),
             (int) $data['user_id']
         );
     }

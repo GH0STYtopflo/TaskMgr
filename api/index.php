@@ -11,11 +11,8 @@ $body = stream_get_contents(fopen('php://input', 'r'));
 $uri = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
 
-
 $request = new Request($uri, $method, $headers, $body);
 $router = Init::init();
-
-echo "received: " . $headers['Authorization'] . "\n";
 
 $response = $router->route($request);
 
@@ -25,4 +22,4 @@ foreach ($response->getHeaders() as $header) {
 
 http_response_code($response->getStatusCode());
 
-echo $response->getBody();
+echo $response->getBody() . PHP_EOL;

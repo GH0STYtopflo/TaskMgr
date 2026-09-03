@@ -30,12 +30,15 @@ class TaskModel extends Model
             throw new PriorityOutOfRangeException($pri, line: __LINE__);
         }
 
+        $data = $data->toArray() + ['status' => TaskStatus::SUBMITTED]; // pass on submitted during insertion
+        $data['deadline'] = $data['deadline']->format(DATE_ATOM);
+
         try {
             $res = $this->handle->preparedStatement(
                 "INSERT INTO tasks (title, \"desc\", priority, deadline, status)
                     VALUES (:title, :desc, :priority, :deadline, :status)
                     RETURNING *",
-                $data->toArray() + ['status' => TaskStatus::SUBMITTED] // pass on submitted during insertion
+                $data
             );
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
@@ -71,8 +74,14 @@ class TaskModel extends Model
     public function update(DTO | UpdateTaskStatusDTO $data): array
     {
         $pri = $data->getPriority();
-        if ($pri > 20 || $pri < 0) {
+        if (!is_null($pri) && ($pri > 20 || $pri < 0)) {
             throw new PriorityOutOfRangeException($pri, line: __LINE__);
+        }
+
+        $data = $data->toArray();
+
+        if (!is_null($data['deadline'])) {
+            $data['deadline'] = $data['deadline']->format(DATE_ATOM);
         }
 
         try {
@@ -84,7 +93,7 @@ class TaskModel extends Model
                  deadline = COALESCE(:deadline, deadline),
                  updated_at = now()
                  RETURNING *",
-                $data->toArray()
+                $data
             )->fetch();
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
@@ -171,10 +180,13 @@ class TaskModel extends Model
 
     public function updateTaskStatus(UpdateTaskStatusDTO | DTO $data): array
     {
+        $data = $data->toArray();
+        $data['status'] = $data['status']->value;
+
         try {
             return $this->handle->preparedStatement(
                 "UPDATE tasks SET status = :status, updated_at = now() WHERE id = :id RETURNING *",
-                $data->toArray()
+                $data
             )->fetch();
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);

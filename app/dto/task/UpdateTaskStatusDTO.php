@@ -45,15 +45,7 @@ class UpdateTaskStatusDTO extends DTO
             );
         }
 
-        return new self($data['id'] , $status);
-    }
-
-    public function toArray(): array
-    {
-        $array = parent::toArray();
-        $array['status'] = $array['status']->getValue();
-
-        return $array;
+        return new self($data['id'], $status);
     }
 
     public function getId(): int

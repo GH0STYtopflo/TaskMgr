@@ -8,7 +8,7 @@ use ghosty\taskmgr\exceptions\TypeMismatchException;
 
 class GetUserCommentsDTO extends DTO
 {
-    private $user_id;
+    private int $user_id;
 
     /**
      * @param $user_id

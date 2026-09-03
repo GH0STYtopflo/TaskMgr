@@ -20,4 +20,9 @@ class LoginResponseDTO extends DTO
     {
         return new self($data['token']);
     }
+
+    public function getToken(): string
+    {
+        return $this->token;
+    }
 }

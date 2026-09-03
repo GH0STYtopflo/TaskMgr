@@ -153,7 +153,7 @@ class TaskService
             new TaskHasActiveSubtasksException($dto->getId(), line: __LINE__);
         }
 
-        $affected = $this->taskModel->update($dto);
+        $affected = $this->taskModel->updateTaskStatus($dto);
 
         return TaskDTO::fromArray($affected);
     }

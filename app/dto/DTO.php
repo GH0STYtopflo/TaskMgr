@@ -1,6 +1,7 @@
 <?php
 
 namespace ghosty\taskmgr\dto;
+use ghosty\taskmgr\database\custom_types\TaskStatus;
 use JsonSerializable;
 use ReflectionObject;
 
@@ -23,6 +24,18 @@ abstract class DTO implements JsonSerializable
 
     public function jsonSerialize(): array
     {
-        return self::toArray();
+        $array = self::toArray();
+
+        foreach ($array as &$value) {
+            if ($value instanceof \DateTimeImmutable) {
+                $value = $value->format(DATE_ATOM);
+            }
+
+            if ($value instanceof TaskStatus) {
+                $value = $value->value;
+            }
+        }
+
+        return $array;
     }
 }

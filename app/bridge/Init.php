@@ -51,10 +51,10 @@ class Init
         $jwt = new JWT(7200, 'random_secret_that_will_be_read_from_dotenv_file_just_making_this_long_enough');
 
         // Create Services
-        $srvCategory = new CategoryService($catModel);
+        $srvCategory = new CategoryService($catModel, $taskModel);
         $srvComment = new CommentService($comModel, $userModel, $taskModel);
         $srvSubtask = new SubTaskService($subModel, $taskModel);
-        $srvTask = new TaskService($taskModel, $userModel, $catModel);
+        $srvTask = new TaskService($taskModel, $userModel, $catModel, $subModel);
         $srvUser = new UserService($userModel, $taskModel, $jwt, $handle);
 
         // Feed these models to controllers

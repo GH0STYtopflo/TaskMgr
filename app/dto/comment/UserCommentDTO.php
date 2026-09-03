@@ -3,6 +3,7 @@
 namespace ghosty\taskmgr\dto\comment;
 
 use DateTimeImmutable;
+use DateTimeZone;
 use ghosty\taskmgr\dto\DTO;
 
 class UserCommentDTO extends DTO
@@ -32,7 +33,7 @@ class UserCommentDTO extends DTO
         return new self(
             (int) $data['id'],
             $data['body'],
-            new DateTimeImmutable($data['submission_time']),
+            new DateTimeImmutable($data['submission_time'], new DateTimeZone('Asia/Tehran')),
             (int) $data['task_title']
         );
     }
@@ -50,16 +51,6 @@ class UserCommentDTO extends DTO
     public function getSubmissionTime(): DateTimeImmutable
     {
         return $this->submission_time;
-    }
-
-    public function getTaskTitle(): string
-    {
-        return $this->task_title;
-    }
-
-    public function getUsername(): string
-    {
-        return $this->username;
     }
 
     public function getTaskId(): int

@@ -32,4 +32,9 @@ class TaskAssignmentResponseDTO extends DTO
     {
         return $this->task_id;
     }
+
+    public function getStatus(): TaskStatus
+    {
+        return $this->status;
+    }
 }
