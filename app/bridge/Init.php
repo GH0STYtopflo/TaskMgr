@@ -10,7 +10,6 @@ use ghosty\taskmgr\controllers\SubtaskController;
 use ghosty\taskmgr\controllers\TaskController;
 use ghosty\taskmgr\controllers\UserController;
 use ghosty\taskmgr\database\Connection;
-use ghosty\taskmgr\database\DBConfig;
 use ghosty\taskmgr\database\DBHandle;
 use ghosty\taskmgr\models\CategoryModel;
 use ghosty\taskmgr\models\CommentModel;

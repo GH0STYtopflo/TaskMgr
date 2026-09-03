@@ -187,4 +187,22 @@ class SubTaskModel extends Model
             );
         }
     }
+
+    public function taskHasActiveSubtask(int $taskId): bool
+    {
+        try {
+            return $this->handle->preparedStatement(
+                "SELECT EXISTS (SELECT 1 FROM sub_tasks WHERE task_id = :task_id AND is_done = FALSE)",
+                ['task_id' => $taskId]
+            )->fetchColumn();
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                $e->getMessage(),
+                500,
+                Severity::WARNING,
+                $e,
+                __LINE__
+            );
+        }
+    }
 }

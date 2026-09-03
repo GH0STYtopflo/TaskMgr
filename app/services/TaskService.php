@@ -18,8 +18,10 @@ use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\TaskAssignmentDoesNotExistException;
 use ghosty\taskmgr\exceptions\TaskCategoryDoesNotExistException;
+use ghosty\taskmgr\exceptions\TaskHasActiveSubtasksException;
 use ghosty\taskmgr\exceptions\UpdatingTaskStatusToSubmittedException;
 use ghosty\taskmgr\models\CategoryModel;
+use ghosty\taskmgr\models\SubTaskModel;
 use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\models\UserModel;
 
@@ -29,11 +31,18 @@ class TaskService
     private UserModel $userModel;
     private CategoryModel $categoryModel;
 
-    public function __construct(TaskModel $taskModel, UserModel $userModel, CategoryModel $categoryModel)
+    private SubtaskModel $subtaskModel;
+
+    public function __construct(
+        TaskModel     $taskModel,
+        UserModel     $userModel,
+        CategoryModel $categoryModel,
+        SubtaskModel  $subtaskModel)
     {
         $this->taskModel = $taskModel;
         $this->userModel = $userModel;
         $this->categoryModel = $categoryModel;
+        $this->subtaskModel = $subtaskModel;
     }
 
     public function createTask(CreateTaskDTO $dto): TaskDTO
@@ -132,13 +141,18 @@ class TaskService
             throw new AccessingNonExistentRecordException($dto->getId(), 'tasks', line: __LINE__);
         }
 
+        if (!$this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId())) {
+            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
+        }
+
         if ($dto->getStatus() == TaskStatus::SUBMITTED) {
             throw new UpdatingTaskStatusToSubmittedException(line: __LINE__);
         }
 
-        if (!$this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId())) {
-            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
-        }
+        throw_if(
+            $this->subtaskModel->taskHasActiveSubtask($dto->getId()) && $dto->getStatus() == TaskStatus::FINISHED,
+            new TaskHasActiveSubtasksException($dto->getId(), line: __LINE__)
+        );
 
         $affected = $this->taskModel->update($dto);
 
