@@ -73,6 +73,15 @@ class RequestParser
             if (str_contains($uriPart, '?')) {
                 foreach(explode('&', substr($uriPart, strpos($uriPart, '?') + 1)) as $keyValStr) {
                     $keyVal = explode('=', $keyValStr);
+                    if (empty($keyVal[1])) {
+                        $keyVal[1] = null;
+                    }
+
+                    if ($keyVal[1] == 'true') {
+                        $keyVal[1] = true;
+                    } elseif ($keyVal[1] == 'false') {
+                        $keyVal[1] = false;
+                    }
                     $queryParams[$keyVal[0]] = $keyVal[1];
                 }
             }
