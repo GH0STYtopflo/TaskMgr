@@ -2,38 +2,54 @@
 
 namespace ghosty\taskmgr\bridge\authentication;
 
+use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
+use DomainException;
+use Firebase\JWT\ExpiredException;
 use Firebase\JWT\Key;
+use Firebase\JWT\SignatureInvalidException;
 use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\dto\user\UserDTO;
 use ghosty\taskmgr\exceptions\ExpiredTokenException;
 use ghosty\taskmgr\exceptions\InvalidTokenException;
+use UnexpectedValueException;
 
 class JWT
 {
-    private const int EXPIRATION_TIME = 3600;
+    private int $exp;
     private const string ISS = 'ghosty.ai';
-    private const string KEY = 'i_am_aware_that_hardcoding_this_in_the_code_and_pushing_it_to_remote_is_wrong_but_i_dont_have_time_for_.env_files_now';
+    private string $key;
     private const string ALG = 'HS256';
+
+    /**
+     * @param int $exp
+     * @param string $key
+     */
+    public function __construct(int $exp, string $key)
+    {
+        $this->exp = $exp;
+        $this->key = $key;
+    }
+
 
     /**
      * Generates a JWT for a user.
      *
      * @param UserDTO|DTO $data The user data used to generate the token.
      * @return string The generated JWT.
-     * @throws \DateMalformedStringException
+     * @throws DateMalformedStringException
      */
-    public static function generateToken(UserDTO | DTO $data): string
+    public function generateToken(UserDTO | DTO $data): string
     {
         $payload = [
             'sub' => $data->getId(),
             'iss' => self::ISS,
             'iat' => new DateTimeImmutable('now', new DateTimeZone('Asia/Tehran'))->getTimestamp(),
-            'exp' => time() + self::EXPIRATION_TIME
+            'exp' => time() + $this->exp
         ];
 
-        return \Firebase\JWT\JWT::encode($payload, self::KEY, self::ALG);
+        return \Firebase\JWT\JWT::encode($payload, $this->key, self::ALG);
     }
 
     /**
@@ -45,15 +61,15 @@ class JWT
      * @throws InvalidTokenException If the token is malformed or has an invalid signature.
      * @throws ExpiredTokenException If the token has expired.
      */
-    public static function decodeToken(string $token): array
+    public function decodeToken(string $token): array
     {
         try {
-            $decoded = \Firebase\JWT\JWT::decode($token, new Key(self::KEY, self::ALG));
+            $decoded = \Firebase\JWT\JWT::decode($token, new Key($this->key, self::ALG));
 
             return (array) $decoded;
-        } catch (\Firebase\JWT\ExpiredException $e) {
+        } catch (ExpiredException $e) {
             throw new ExpiredTokenException($e, __LINE__);
-        } catch (\Firebase\JWT\SignatureInvalidException | \DomainException | \UnexpectedValueException $ex) {
+        } catch (SignatureInvalidException | DomainException | UnexpectedValueException $ex) {
             throw new InvalidTokenException($ex, __LINE__);
         }
     }

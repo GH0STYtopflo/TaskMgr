@@ -13,13 +13,16 @@ use ghosty\taskmgr\models\UserModel;
 class Authentication
 {
     private UserModel $userModel;
+    private JWT $jwt;
 
     /**
      * @param UserModel $userModel
+     * @param JWT $jwt
      */
-    public function __construct(UserModel $userModel)
+    public function __construct(UserModel $userModel, JWT $jwt)
     {
         $this->userModel = $userModel;
+        $this->jwt = $jwt;
     }
 
     /**
@@ -45,7 +48,7 @@ class Authentication
             $token = str_replace('Bearer ', '', $token);
         }
 
-        $data = JWT::decodeToken($token);
+        $data = $this->jwt->decodeToken($token);
 
         return $this->generateAuthorizationContext($data);
     }

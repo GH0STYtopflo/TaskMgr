@@ -3,6 +3,7 @@
 namespace ghosty\taskmgr\bridge;
 
 use ghosty\taskmgr\bridge\authentication\Authentication;
+use ghosty\taskmgr\bridge\authentication\JWT;
 use ghosty\taskmgr\controllers\CategoryController;
 use ghosty\taskmgr\controllers\CommentController;
 use ghosty\taskmgr\controllers\SubtaskController;
@@ -26,8 +27,16 @@ class Init
 {
     public static function init(): Router
     {
-        // Get connection to database
-        $conn = Connection::getConnection(DBConfig::readConfig());
+        // Get connection to database (env read from dotenv)
+        $conn = Connection::getConnection(
+            'pgsql',
+            'localhost',
+            '5432',
+            'taskmgr',
+            'postgres',
+            'postgres',
+            [3 => 2, 19 => 2, 20 => false]
+        );
 
         // Create handle
         $handle = new DBHandle($conn);
@@ -54,7 +63,7 @@ class Init
         $userCtl = new UserController($srvUser);
 
         // Auth
-        $authentication = new Authentication($userModel);
+        $authentication = new Authentication($userModel, new JWT(7200, 'random_secret_that_will_be_read_from_dotenv_file_just_making_this_long_enough'));
 
         // Finally return a router obj
         return new Router($authentication, $catCtl, $userCtl, $taskCtl, $subCtl, $comCtl);

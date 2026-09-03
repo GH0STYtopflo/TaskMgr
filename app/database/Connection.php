@@ -9,14 +9,22 @@ use PDOException;
 
 class Connection
 {
-    public static function getConnection(DBConfig $config): PDO | null
+    public static function getConnection(
+        string $dbms,
+        string $host,
+        string $port,
+        string $dbname,
+        string $dbuser,
+        string $dbpass,
+        array  $options
+    ): PDO
     {
         try {
             return new PDO(
-                $config->getDbms() . ':host=' . $config->getHost() . ';port=' . $config->getPort() . ';dbname=' . $config->getDbname(),
-                $config->getUsername(),
-                $config->getPassword(),
-                $config->getOptions()
+                $dbms . ':host=' . $host . ';port=' . $port . ';dbname=' . $dbname,
+                $dbuser,
+                $dbpass,
+                $options
             );
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage(), $e->getCode(), Severity::ERROR, $e, __LINE__);
