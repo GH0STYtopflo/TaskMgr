@@ -4,8 +4,9 @@ namespace ghosty\taskmgr\services;
 
 use ghosty\taskmgr\dto\AuthorizationContext;
 use ghosty\taskmgr\dto\category\CategoryDTO;
-use ghosty\taskmgr\dto\category\CreateAndSearchCategoryDTO;
+use ghosty\taskmgr\dto\category\CreateCategoryDTO;
 use ghosty\taskmgr\dto\category\FindCategoryByIdDTO;
+use ghosty\taskmgr\dto\category\SearchCategoryDTO;
 use ghosty\taskmgr\dto\category\TaskCategoryDTO;
 use ghosty\taskmgr\dto\category\UpdateCategoryDTO;
 use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
@@ -26,7 +27,7 @@ class CategoryService
         $this->taskModel = $taskModel;
     }
 
-    public function createCategory(CreateAndSearchCategoryDTO $dto): CategoryDTO
+    public function createCategory(CreateCategoryDTO $dto): CategoryDTO
     {
         if ($this->categoryModel->existsByTitle($dto->getTitle())) {
             throw new CategoryExistsException(
@@ -75,7 +76,7 @@ class CategoryService
         $this->categoryModel->delete($dto);
     }
 
-    public function searchCategory(CreateAndSearchCategoryDTO $dto): array
+    public function searchCategory(SearchCategoryDTO $dto): array
     {
         $categories = $this->categoryModel->search($dto);
 
@@ -99,11 +100,11 @@ class CategoryService
 
     public function getCategoryById(FindCategoryByIdDTO $dto): ?CategoryDTO
     {
-        $category = $this->categoryModel->findById($dto);
-
-        if (empty($category)) {
-            return null;
+        if (!$this->categoryModel->existsById($dto->getId())) {
+            throw new AccessingNonExistentRecordException($dto->getId(), 'categories');
         }
+
+        $category = $this->categoryModel->findById($dto);
 
         return CategoryDTO::fromArray($category);
     }
@@ -111,10 +112,10 @@ class CategoryService
     public function getTaskCategories(FindTaskByIdDTO $dto, AuthorizationContext $context): array
     {
         if (!$this->taskModel->existsById($dto->getId())) {
-            new AccessingNonExistentRecordException($dto->getId(), 'tasks', line: __LINE__);
+            throw new AccessingNonExistentRecordException($dto->getId(), 'tasks', line: __LINE__);
         }
 
-        if ($this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId())) {
+        if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId()))) {
             throw new AccessingNonAuthorizedResourceException(line: __LINE__);
         }
 

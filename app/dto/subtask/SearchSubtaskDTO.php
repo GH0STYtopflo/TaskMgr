@@ -8,14 +8,10 @@ use ghosty\taskmgr\exceptions\TypeMismatchException;
 
 class SearchSubtaskDTO extends DTO
 {
-    private string $title;
-    private bool $is_done;
+    private ?string $title;
+    private ?bool $is_done;
 
-    /**
-     * @param string $title
-     * @param bool $is_done
-     */
-    public function __construct(string $title, bool $is_done)
+    public function __construct(?string $title, ?bool $is_done)
     {
         $this->title = $title;
         $this->is_done = $is_done;
@@ -23,15 +19,15 @@ class SearchSubtaskDTO extends DTO
 
     public static function fromArray(array $data): self
     {
-        if (!isset($data["title"])) {
-            throw new MissingParamException('title', line: __LINE__);
+        if (!isset($data['title'])) {
+            $data['title'] = null;
         }
 
-        if (!isset($data["is_done"])) {
-            throw new MissingParamException('is_done', line: __LINE__);
+        if (!isset($data['is_done'])) {
+            $data['is_done'] = null;
         }
 
-        if (!is_bool($data["is_done"])) {
+        if (isset($data['is_done']) && !is_bool($data["is_done"])) {
             throw new TypeMismatchException('is_done', $data['is_done'], 'bool', line: __LINE__);
         }
 

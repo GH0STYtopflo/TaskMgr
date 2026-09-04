@@ -40,7 +40,7 @@ class CommentController
         }
 
         return Response::makeResponse(
-            200,
+            201,
             [Headers::TYPE_JSON],
             $response
         );

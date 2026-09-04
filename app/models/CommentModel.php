@@ -117,9 +117,11 @@ class CommentModel extends Model
     {
         try {
             return $this->handle->preparedStatement(
-                "SELECT * FROM comments WHERE
-                           (:user_id IS NULL OR user_id = :user_id) AND
-                           (:task_id IS NULL OR task_id = :task_id)",
+                "SELECT * 
+                            FROM comments 
+                            WHERE (user_id = :user_id OR :user_id IS NULL) AND 
+                            (task_id = :task_id OR :task_id IS NULL);
+                            ",
                 $data->toArray())->fetchAll();
         } catch (PDOException $e) {
             throw new DatabaseException(
@@ -150,7 +152,7 @@ class CommentModel extends Model
         }
     }
 
-    public function isAuthor(int $userId, int $commentId): int
+    public function isAuthor(int $userId, int $commentId): bool
     {
         try {
             return $this->handle->preparedStatement(

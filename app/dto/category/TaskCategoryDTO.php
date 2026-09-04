@@ -8,14 +8,14 @@ class TaskCategoryDTO extends DTO
 {
     private int $task_id;
     private int $category_id;
-    private int $title;
+    private string $title;
 
     /**
      * @param int $task_id
      * @param int $category_id
-     * @param int $title
+     * @param string $title
      */
-    public function __construct(int $task_id, int $category_id, int $title)
+    public function __construct(int $task_id, int $category_id, string $title)
     {
         $this->task_id = $task_id;
         $this->category_id = $category_id;
@@ -24,7 +24,7 @@ class TaskCategoryDTO extends DTO
 
     public static function fromArray(array $data): self
     {
-        return new self($data['task_id'], $data['category_id'], $data['title']);
+        return new self($data['task_id'], $data['id'], $data['title']);
     }
 
     public function getTaskId(): int

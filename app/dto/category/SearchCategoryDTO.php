@@ -3,16 +3,12 @@
 namespace ghosty\taskmgr\dto\category;
 
 use ghosty\taskmgr\dto\DTO;
-use ghosty\taskmgr\exceptions\MissingParamException;
 
-class CreateAndSearchCategoryDTO extends DTO
+class SearchCategoryDTO extends DTO
 {
-    private string $title;
+    private ?string $title;
 
-    /**
-     * @param string $title
-     */
-    public function __construct(string $title)
+    public function __construct(?string $title)
     {
         $this->title = $title;
     }
@@ -21,7 +17,7 @@ class CreateAndSearchCategoryDTO extends DTO
     public static function fromArray(array $data): self
     {
         if (!isset($data['title'])) {
-            throw new MissingParamException('title', line: __LINE__);
+            $data['title'] = null;
         }
 
         return new self($data['title']);

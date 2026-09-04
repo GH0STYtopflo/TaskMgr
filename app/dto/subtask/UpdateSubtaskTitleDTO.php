@@ -41,7 +41,7 @@ class UpdateSubtaskTitleDTO extends DTO
             );
         }
 
-        return new self($data["task_id"], $data["new_title"]);
+        return new self($data["id"], $data["new_title"]);
     }
 
     public function toArray(): array

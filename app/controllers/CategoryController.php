@@ -3,8 +3,9 @@
 namespace ghosty\taskmgr\controllers;
 
 use ghosty\taskmgr\dto\AuthorizationContext;
-use ghosty\taskmgr\dto\category\CreateAndSearchCategoryDTO;
+use ghosty\taskmgr\dto\category\CreateCategoryDTO;
 use ghosty\taskmgr\dto\category\FindCategoryByIdDTO;
+use ghosty\taskmgr\dto\category\SearchCategoryDTO;
 use ghosty\taskmgr\dto\category\UpdateCategoryDTO;
 use ghosty\taskmgr\dto\Response;
 use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
@@ -32,7 +33,7 @@ class CategoryController
     public function createCategory(array $data): Response
     {
         try {
-            $dto = CreateAndSearchCategoryDTO::fromArray($data);
+            $dto = CreateCategoryDTO::fromArray($data);
             $response = $this->categoryService->createCategory($dto);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
@@ -86,7 +87,7 @@ class CategoryController
     public function searchCategory(array $data): Response
     {
         try {
-            $dto = CreateAndSearchCategoryDTO::fromArray($data);
+            $dto = SearchCategoryDTO::fromArray($data);
             $response = $this->categoryService->searchCategory($dto);
         } catch (MissingParamException $e) {
             return $e->createErrResponse();
@@ -133,6 +134,7 @@ class CategoryController
      * Maps to: GET /task/{id}/categories
      *
      * @param array $data
+     * @param AuthorizationContext $context
      * @return Response
      */
     public function getTaskCategories(array $data, AuthorizationContext $context): Response

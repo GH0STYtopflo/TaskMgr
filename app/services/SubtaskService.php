@@ -30,7 +30,7 @@ class SubtaskService
     public function createSubtask(CreateSubtaskDTO $dto): SubtaskDTO
     {
         if (!$this->taskModel->existsById($dto->getTaskId())) {
-            new AccessingNonExistentRecordException($dto->getTaskID(), 'tasks', line: __LINE__)->createErrResponse();
+            throw new AccessingNonExistentRecordException($dto->getTaskID(), 'tasks', line: __LINE__);
         }
 
         if ($this->subTaskModel->existsByTitleForTask($dto->getTitle(), $dto->getTaskId())) {
@@ -106,7 +106,6 @@ class SubtaskService
         if (!$this->subTaskModel->existsById($dto->getId())) {
             throw new AccessingNonExistentRecordException($dto->getId(), 'sub_tasks', line: __LINE__);
         }
-
 
         $taskId = $this->subTaskModel->getSubtaskTaskId($dto->getId());
         if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $taskId))) {

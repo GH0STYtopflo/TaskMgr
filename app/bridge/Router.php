@@ -87,7 +87,7 @@ class Router
             }, true, true],
             'GET /categories?query' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->categoryController->searchCategory($data);
-            }, true, false],
+            }, true, true],
             'GET /categories' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->categoryController->getAllCategories();
             }, true, true],
@@ -134,10 +134,10 @@ class Router
             'GET /tasks/{task_id}/subtasks' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->subTaskController->getTaskSubtasks($data, $context);
             }, true, false],
-            'PATCH /subtasks/{id}' => [function (array $data, AuthorizationContext $context): Response {
+            'PATCH /subtasks/{id}:update_status' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->subTaskController->updateSubtaskStatus($data, $context);
             }, true, false],
-            'PUT /subtasks/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
+            'PATCH /subtasks/{id}:update_title' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->subTaskController->updateSubtaskTitle($data);
             }, true, true],
             'GET /subtasks?query' => [function (array $data, ?AuthorizationContext $context): Response {
@@ -172,10 +172,10 @@ class Router
             'PATCH /tasks/{id}:update_status' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->taskController->updateTaskStatus($data, $context);
             }, true, false],
-            'POST /tasks/{task_id}:add_category' => [function (array $data, ?AuthorizationContext $context): Response {
+            'POST /tasks/{task_id}/categories' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->addTaskCategory($data);
             }, true, true],
-            'DELETE /tasks/{task_id}:remove_category' => [function (array $data, ?AuthorizationContext $context): Response {
+            'DELETE /tasks/{task_id}/categories' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->removeTaskCategory($data);
             }, true, true],
             'GET /tasks/{id}/categories' => [function (array $data, AuthorizationContext $context): Response {

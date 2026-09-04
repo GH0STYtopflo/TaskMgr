@@ -3,8 +3,9 @@
 namespace ghosty\taskmgr\models;
 
 use ghosty\taskmgr\database\DBHandle;
-use ghosty\taskmgr\dto\category\CreateAndSearchCategoryDTO;
+use ghosty\taskmgr\dto\category\CreateCategoryDTO;
 use ghosty\taskmgr\dto\category\FindCategoryByIdDTO;
+use ghosty\taskmgr\dto\category\SearchCategoryDTO;
 use ghosty\taskmgr\dto\category\UpdateCategoryDTO;
 use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
@@ -19,7 +20,7 @@ class CategoryModel extends Model
         parent::__construct($handle);
     }
 
-    public function insert(DTO|CreateAndSearchCategoryDTO $data): array
+    public function insert(DTO|CreateCategoryDTO $data): array
     {
         try {
             return $this->handle->preparedStatement(
@@ -40,7 +41,7 @@ class CategoryModel extends Model
     public function findById(DTO|FindCategoryByIdDTO $data): ?array
     {
         try {
-            return $this->handle->preparedStatement(
+            $result = $this->handle->preparedStatement(
                 "SELECT * FROM categories WHERE id = :id",
                 $data->toArray()
             )->fetch();
@@ -52,6 +53,12 @@ class CategoryModel extends Model
                 $e,
                 __LINE__
             );
+        }
+
+        if (empty($result)) {
+            return null;
+        } else {
+            return $result;
         }
     }
 
@@ -106,11 +113,11 @@ class CategoryModel extends Model
         }
     }
 
-    public function search(DTO|CreateAndSearchCategoryDTO $data): array
+    public function search(DTO|CreateCategoryDTO | SearchCategoryDTO $data): array
     {
         try {
             return $this->handle->preparedStatement(
-                "SELECT * FROM categories WHERE :title IS NULL OR title LIKE :title",
+                "SELECT * FROM categories WHERE title ILIKE '%' || :title || '%' OR :title IS NULL",
                 $data->toArray()
             )->fetchAll();
         } catch (PDOException $e) {

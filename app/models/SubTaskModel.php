@@ -75,18 +75,24 @@ class SubTaskModel extends Model
 
     public function update(DTO | SetSubtaskStatusDTO | UpdateSubtaskTitleDTO $data): array
     {
-        if (!is_null($data->getTitle()) && $this->existsByTitleForTask($data->getTitle(), $data->getTaskId())) {
-            throw new SubtaskExistsException($data->getTitle(), line: __LINE__);
+        if (($data instanceof UpdateSubtaskTitleDTO) && $this->existsByTitleForTask($data->getNewTitle(), $data->getId())) {
+            throw new SubtaskExistsException($data->getNewTitle(), line: __LINE__);
         }
 
         try {
+            $data_array = $data->toArray();
+
+            if (isset($data_array['is_done'])) {
+                $data_array['is_done'] = $data_array['is_done'] ? 'true' : 'false';
+            }
+
             return $this->handle->preparedStatement(
                 "UPDATE sub_tasks SET 
-                     title = COALESCE(:title, title),
-                     is_done = COALESCE(:is_done, is_done)
-                     WHERE id = :id
-                     RETURNING *",
-                $data->toArray())->fetch();
+             title = COALESCE(:new_title, title),
+             is_done = COALESCE(CAST(:is_done AS BOOLEAN), is_done)
+             WHERE id = :id
+             RETURNING *",
+                $data_array)->fetch();
         } catch (PDOException $e) {
             throw new DatabaseException(
                 $e->getMessage(),
@@ -118,9 +124,10 @@ class SubTaskModel extends Model
         try {
             return $this->handle->preparedStatement(
                 "SELECT * FROM sub_tasks WHERE 
-                            (:title IS NULL OR title LIKE :title) AND
-                            (:is_done IS NULL OR is_done = :is_done) AND 
-                            (:task_id IS NULL OR task_id = :task_id)",
+                            (title ILIKE '%' || :title || '%' OR :title IS NULL) AND 
+                            (is_done = :is_done OR :is_done IS NULL) AND
+                            (task_id = :task_id OR :task_id IS NULL);
+",
                 $data->toArray()
             )->fetchAll();
         } catch (PDOException $e) {
