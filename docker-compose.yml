@@ -1,16 +1,23 @@
 services:
   backend:
     build: .
-    ports: 
+    ports:
       - "8088:8088"
     depends_on:
-      - pgsqldb
+      pgsqldb:
+        condition: service_healthy
+
 
   pgsqldb:
     image: postgres:latest
     environment:
-          POSTGRES_DB: taskmgr
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          volumes:
-                - ./script.sql:/docker-entrypoint-initdb.d/0_scheme.sql
+      POSTGRES_DB: taskmgr
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10m
+      timeout: 10s
+      retries: 5
