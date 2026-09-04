@@ -7,8 +7,5 @@ vendor/
 # Sandbox file for testing purposes
 sandbox.php
 
-# Config dir contents
-config/*
-
 # Logs dir
 logs/*

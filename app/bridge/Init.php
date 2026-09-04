@@ -27,15 +27,19 @@ class Init
     public static function init(): Router
     {
         // Get connection to database (env read from dotenv)
-        $conn = Connection::getConnection(
-            'pgsql',
-            'localhost',
-            '5432',
-            'taskmgr',
-            'postgres',
-            'postgres',
-            [3 => 2, 19 => 2, 20 => false]
-        );
+        try {
+            $conn = Connection::getConnection(
+                getenv('TMG_DBMS'),
+                getenv('TMG_HOST'),
+                getenv('TMG_PORT'),
+                getenv('POSTGRES_DB'),
+                getenv('POSTGRES_USER'),
+                getenv('POSTGRES_PASSWORD'),
+                [3 => 2, 19 => 2, 20 => false]
+            );
+        } catch (\Exception $e) {
+            echo "Error: " . $e->getMessage();
+        }
 
         // Create handle
         $handle = new DBHandle($conn);
@@ -48,7 +52,7 @@ class Init
         $userModel = new UserModel($handle);
 
         // JWT handle
-        $jwt = new JWT(7200, 'random_secret_that_will_be_read_from_dotenv_file_just_making_this_long_enough');
+        $jwt = new JWT(getenv('TMG_TOKEN_EXP'), getenv('TMG_SECRET'));
 
         // Create Services
         $srvCategory = new CategoryService($catModel, $taskModel);

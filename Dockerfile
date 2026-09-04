@@ -1,11 +1,15 @@
-FROM php:latest
+FROM php:8.4
 
 WORKDIR /app
+
+# I had to install pgsql libraries
+RUN apt-get update && apt-get install -y libpq-dev unzip libzip-dev && rm -rf /var/lib/apt/lists/*
+
 COPY . .
 
-RUN apt update
-RUN apt install composer -y
-RUN docker-php-ext-install pdo pdo_pgsql
+RUN docker-php-ext-install pdo pdo_pgsql zip
+
+RUN curl https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 RUN composer install
 

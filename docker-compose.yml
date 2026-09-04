@@ -1,6 +1,8 @@
 services:
   backend:
     build: .
+    env_file:
+      - .env
     ports:
       - "8088:8088"
     depends_on:
@@ -10,14 +12,12 @@ services:
 
   pgsqldb:
     image: postgres:latest
-    environment:
-      POSTGRES_DB: taskmgr
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+    env_file:
+      - .env
     volumes:
       - ./sql:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10m
+      interval: 5s
       timeout: 10s
       retries: 5
