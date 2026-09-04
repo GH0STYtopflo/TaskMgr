@@ -9,13 +9,13 @@ use ghosty\taskmgr\exceptions\WrongPaginationParamsException;
 
 class SearchUserDTO extends DTO
 {
-    private string $username;
-    private bool $is_admin;
+    private ?string $username;
+    private ?bool $is_admin;
 
     private int $page;
     private int $limit;
 
-    public function __construct(string $username, bool $is_admin, int $page, int $limit)
+    public function __construct(?string $username, ?bool $is_admin, int $page, int $limit)
     {
         $this->username = $username;
         $this->is_admin = $is_admin;
@@ -26,14 +26,14 @@ class SearchUserDTO extends DTO
     public static function fromArray(array $data): self
     {
         if (!isset($data['username'])) {
-            throw new MissingParamException('username', line: __LINE__);
+            $data['username'] = null;
         }
 
         if (!isset($data['is_admin'])) {
-            throw new MissingParamException('is_admin', line: __LINE__);
+            $data['is_admin'] = null;
         }
 
-        if (!is_bool($data['is_admin'])) {
+        if (isset($data['is_admin']) && !is_bool($data['is_admin'])) {
             throw new TypeMismatchException('is_admin', $data['is_admin'], 'bool', line: __LINE__);
         }
 
@@ -49,7 +49,7 @@ class SearchUserDTO extends DTO
         $limit = $data['limit'] ?? 10;
 
 
-        return new self($data['username'], $data['is_admin'], $data['page'], $data['limit']);
+        return new self($data['username'], $data['is_admin'], $page, $limit);
     }
 
     public function getUsername(): string

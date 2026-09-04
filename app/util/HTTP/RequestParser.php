@@ -51,7 +51,7 @@ class RequestParser
 
         // extract variable names into an array
         foreach (explode('/', $template) as $templatePart) {
-            if (str_contains(':', $templatePart)) {
+            if (str_contains($templatePart, ':')) {
                 $templatePart = explode(':', $templatePart)[0];
             }
 
@@ -62,7 +62,7 @@ class RequestParser
         }
 
         foreach (explode('/', $uri) as $uriPart) {
-            if (str_contains(':', $uriPart)) {
+            if (str_contains($uriPart, ':')) {
                 $uriPart = explode(':', $uriPart)[0];
             }
 

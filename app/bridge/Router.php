@@ -56,42 +56,42 @@ class Router
         // scheme: 'METHOD ROUTE' => [function, must have token, must be admin]
         $this->routes = [
             // Test
-            'GET /test' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /test' => [function (array $data, ?AuthorizationContext $context): Response {
                 return self::test($data);
             }, false, false],
 
             // Login
-            'POST /login' => [function (array $data, AuthorizationContext $context): Response {
+            'POST /login' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->userController->login($data);
             }, false, false],
 
             // Logout
-            'POST /logout' => [function (array $data, AuthorizationContext $context): Response {
+            'POST /logout' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->userController->logout($data);
             }, false, false],
 
             // Signup
-            'POST /signup' => [function (array $data, AuthorizationContext $context): Response {
+            'POST /signup' => [function (array $data): Response {
                 return $this->userController->createUser($data);
             }, false, false],
 
             // Category routes
-            'POST /categories' => [function (array $data, AuthorizationContext $context): Response {
+            'POST /categories' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->categoryController->createCategory($data);
             }, true, true],
-            'PATCH /categories/{id}' => [function (array $data, AuthorizationContext $context): Response {
+            'PATCH /categories/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->categoryController->updateCategory($data);
             }, true, true],
-            'DELETE /categories/{id}' => [function (array $data, AuthorizationContext $context): Response {
+            'DELETE /categories/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->categoryController->deleteCategory($data);
             }, true, true],
-            'GET /categories?query' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /categories?query' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->categoryController->searchCategory($data);
             }, true, false],
-            'GET /categories' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /categories' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->categoryController->getAllCategories();
             }, true, true],
-            'GET /categories/{id}' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /categories/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->categoryController->getCategoryById($data);
             }, true, true],
 
@@ -111,7 +111,7 @@ class Router
             'GET /tasks/{task_id}/comments' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->commentController->getTaskComments($data, $context);
             }, true, false],
-            'GET /comments' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /comments' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->commentController->getAllComments($data);
             }, true, true],
             'GET /comments/{id}' => [function (array $data, AuthorizationContext $context): Response {
@@ -119,16 +119,16 @@ class Router
             }, true, false],
 
             // Subtask routes
-            'POST /tasks/{task_id}/subtasks' => [function (array $data, AuthorizationContext $context): Response {
+            'POST /tasks/{task_id}/subtasks' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->subTaskController->createSubtask($data);
             }, true, true],
-            'DELETE /subtasks/{id}' => [function (array $data, AuthorizationContext $context): Response {
+            'DELETE /subtasks/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->subTaskController->deleteSubtask($data);
             }, true, true],
             'GET /subtasks/{id}' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->subTaskController->getSubtaskById($data, $context);
             }, true, true],
-            'GET /subtasks' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /subtasks' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->subTaskController->getAllSubtasks($data);
             }, true, true],
             'GET /tasks/{task_id}/subtasks' => [function (array $data, AuthorizationContext $context): Response {
@@ -137,45 +137,45 @@ class Router
             'PATCH /subtasks/{id}' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->subTaskController->updateSubtaskStatus($data, $context);
             }, true, false],
-            'PUT /subtasks/{id}' => [function (array $data, AuthorizationContext $context): Response {
+            'PUT /subtasks/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->subTaskController->updateSubtaskTitle($data);
             }, true, true],
-            'GET /subtasks?query' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /subtasks?query' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->subTaskController->searchSubtasks($data);
             }, true, true],
 
             // Task routes
-            'POST /tasks' => [function (array $data, AuthorizationContext $context): Response {
+            'POST /tasks' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->createTask($data);
             }, true, true],
-            'DELETE /tasks/{id}' => [function (array $data, AuthorizationContext $context): Response {
+            'DELETE /tasks/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->deleteTask($data);
             }, true, true],
-            'GET /tasks/{id}' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /tasks/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->getTaskById($data, $context);
             }, true, false],
-            'GET /tasks' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /tasks' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->getAllTasks();
             }, true, true],
-            'PATCH /tasks/{id}' => [function (array $data, AuthorizationContext $context): Response {
+            'PATCH /tasks/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->updateTask($data);
             }, true, true],
-            'GET /tasks?query' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /tasks?query' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->searchTasks($data);
             }, true, true],
-            'POST /tasks/{task_id}/users' => [function (array $data, AuthorizationContext $context): Response {
+            'POST /tasks/{task_id}/users' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->assignTaskToUser($data);
             }, true, true],
-            'DELETE /tasks/{task_id}/users' => [function (array $data, AuthorizationContext $context): Response {
+            'DELETE /tasks/{task_id}/users' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->dischargeTaskFromUser($data);
             }, true, true],
             'PATCH /tasks/{id}:update_status' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->taskController->updateTaskStatus($data, $context);
             }, true, false],
-            'POST /tasks/{task_id}/categories' => [function (array $data, AuthorizationContext $context): Response {
+            'POST /tasks/{task_id}/categories' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->addTaskCategory($data);
             }, true, true],
-            'DELETE /tasks/{task_id}/categories' => [function (array $data, AuthorizationContext $context): Response {
+            'DELETE /tasks/{task_id}/categories' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->removeTaskCategory($data);
             }, true, true],
             'GET /tasks/{id}/categories' => [function (array $data, AuthorizationContext $context): Response {
@@ -189,10 +189,10 @@ class Router
             'GET /users/{id}' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->userController->getUserById($data, $context);
             }, true, false],
-            'GET /users' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /users' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->userController->getAllUsers();
             }, true, true],
-            'GET /users?query' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /users?query' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->userController->searchUsers($data);
             }, true, true],
             'PATCH /users/{id}:update_username' => [function (array $data, AuthorizationContext $context): Response {
@@ -201,7 +201,7 @@ class Router
             'PATCH /users/{id}:update_password' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->userController->updatePassword($data, $context);
             }, true, false],
-            'GET /users/{id}/tasks' => [function (array $data, AuthorizationContext $context): Response {
+            'GET /users/{id}/tasks' => [function (array $data, AuthorizationContext $context): Response { //TODO: CHECK THIS TOO
                 return $this->userController->getUserTasks($data, $context);
             }, true, false],
         ];
@@ -217,6 +217,8 @@ class Router
                         return $e->createErrResponse();
                     }
                 }
+
+                $context = $context ?? null;
 
                 if ($this->routes[$route][2] && !$context->isAdmin()) {
                     return new RouteAccessNotAllowed($route, line: __LINE__)->createErrResponse();
@@ -259,8 +261,6 @@ class Router
                 }
 
                 if (explode(':', $templateParts[$i])[1] !== explode(':', $reqRouteParts[$i])[1]) {
-                    var_dump(explode(':', $reqRouteParts[$i])[1]);
-                    var_dump(explode(':', $templateParts[$i])[1]);
                     return false;
                 }
 
@@ -281,7 +281,12 @@ class Router
                 return false;
             }
 
-            if (!str_contains($reqRouteParts[$i], '?') && $templateParts[$i] !== $reqRouteParts[$i]) {
+            if (str_contains($templateParts[$i], '?')) {
+                $reqRouteParts[$i] = explode('?', $reqRouteParts[$i])[0];
+                $templateParts[$i] = explode('?', $templateParts[$i])[0];
+            }
+
+            if ($templateParts[$i] !== $reqRouteParts[$i]) {
                 return false;
             }
         }

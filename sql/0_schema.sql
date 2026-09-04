@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS task_categories (
 );
 
 CREATE TABLE IF NOT EXISTS token_black_list (
-    token VARCHAR NOT NULL
+    token VARCHAR NOT NULL UNIQUE
 );
 
 CREATE INDEX idx_tasks_priority ON tasks(priority);

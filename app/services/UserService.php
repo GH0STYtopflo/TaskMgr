@@ -44,11 +44,11 @@ class UserService
 
     public function createUser(CreateUserDTO $dto): UserDTO
     {
-        $created = $this->userModel->insert($dto);
-
         if ($this->userModel->existsByUsername($dto->getUsername())) {
             throw new UsernameExistsException($dto->getUsername(), __LINE__);
         }
+
+        $created = $this->userModel->insert($dto);
 
         return UserDTO::fromArray($created);
     }

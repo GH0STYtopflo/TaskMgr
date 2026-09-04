@@ -47,7 +47,7 @@ class UserDTO extends DTO
             throw new TypeMismatchException('is_admin','string(' . $data['is_admin'] . ')' ,'bool' ,  line: __LINE__);
         }
 
-        return new self($data['id'], $data['username'], $data['isAdmin']);
+        return new self($data['id'], $data['username'], $data['is_admin']);
     }
 
     public function getId(): int

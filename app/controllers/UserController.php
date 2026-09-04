@@ -55,7 +55,7 @@ class UserController
         try {
             $dto = LoginDto::fromArray($data);
             $response = $this->userService->login($dto);
-        } catch (MissingParamException $e) {
+        } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
 

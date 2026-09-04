@@ -126,8 +126,8 @@ class UserModel extends Model
         try {
             return $this->handle->preparedStatement(
                 "SELECT * FROM users WHERE 
-                        (:username IS NULL OR username LIKE :username) AND
-                        (:is_admin IS NULL OR is_admin LIKE :is_admin)
+                        (LOWER(username) ILIKE '%' || :username || '%' OR :username IS NULL) AND
+                        (is_admin = :is_admin OR :is_admin IS NULL)
                         LIMIT :limit 
                         OFFSET :offset",
                 $data
@@ -153,7 +153,7 @@ class UserModel extends Model
     {
         try {
             return $this->handle->preparedStatement(
-                "SELECT EXISTS(SELECT 1 FROM users WHERE username = :username)",
+                "SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(TRIM(username)) = LOWER(TRIM(:username)))",
                 ['username' => $username]
             )->fetchColumn();
         } catch (PDOException $e) {

@@ -66,10 +66,11 @@ class Authentication
 
     private function generateAuthorizationContext(array $data): AuthorizationContext
     {
+        $sub = $data['sub'];
         $data = $this->userModel->findById(FindUserByIdDTO::fromArray(['id' => $data['sub']]));
 
         if (is_null($data)) {
-            throw new AccessingNonExistentRecordException($data['sub'], 'users', line: __LINE__);
+            throw new InvalidTokenException(line: __LINE__);
         }
 
         return AuthorizationContext::fromArray($data);
