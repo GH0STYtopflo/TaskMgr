@@ -18,8 +18,10 @@ use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
 use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
 use ghosty\taskmgr\exceptions\TaskAssignmentDoesNotExistException;
 use ghosty\taskmgr\exceptions\TaskCategoryDoesNotExistException;
+use ghosty\taskmgr\exceptions\TaskCategoryExistsException;
 use ghosty\taskmgr\exceptions\TaskHasActiveSubtasksException;
 use ghosty\taskmgr\exceptions\UpdatingTaskStatusToSubmittedException;
+use ghosty\taskmgr\exceptions\UserAlreadyAssignedException;
 use ghosty\taskmgr\models\CategoryModel;
 use ghosty\taskmgr\models\SubTaskModel;
 use ghosty\taskmgr\models\TaskModel;
@@ -65,10 +67,13 @@ class TaskService
     {
         $task = $this->taskModel->findById($dto);
 
+        if (!$this->taskModel->existsById($dto->getId())) {
+            throw new AccessingNonExistentRecordException($dto->getId(), 'tasks', line: __LINE__);
+        }
+
         if (!is_null($task) && !($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId()))) {
             throw new AccessingNonAuthorizedResourceException(line: __LINE__);
         }
-
         if (is_null($task)) {
             return null;
         }
@@ -115,12 +120,16 @@ class TaskService
 
     public function assignTaskToUser(AssignAndDischargeTaskDTO $dto): TaskAssignmentResponseDTO
     {
-        if ($this->taskModel->existsById($dto->getTaskId())) {
+        if (!$this->taskModel->existsById($dto->getTaskId())) {
             throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
         }
 
-        if ($this->userModel->existsById($dto->getUserId())) {
+        if (!$this->userModel->existsById($dto->getUserId())) {
             throw new AccessingNonExistentRecordException($dto->getUserId(), 'users', line: __LINE__);
+        }
+
+        if ($this->taskModel->isUserAssignedToTask($dto->getUserId(), $dto->getTaskId())) {
+            throw new UserAlreadyAssignedException($dto->getUserId(), $dto->getTaskId());
         }
 
         return TaskAssignmentResponseDTO::fromArray($this->taskModel->assignTaskToUser($dto));
@@ -128,7 +137,7 @@ class TaskService
 
     public function disChargeUserFromTask(AssignAndDischargeTaskDTO $dto): void
     {
-        if ($this->taskModel->assignmentExists($dto)) {
+        if (!$this->taskModel->assignmentExists($dto)) {
             throw new TaskAssignmentDoesNotExistException($dto->getUserId(), $dto->getTaskId(), line: __LINE__);
         }
 
@@ -137,11 +146,11 @@ class TaskService
 
     public function updateTaskStatus(UpdateTaskStatusDTO $dto, AuthorizationContext $context): TaskDTO
     {
-        if ($this->taskModel->existsById($dto->getId())) {
+        if (!$this->taskModel->existsById($dto->getId())) {
             throw new AccessingNonExistentRecordException($dto->getId(), 'tasks', line: __LINE__);
         }
 
-        if (!$this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId())) {
+        if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId()))) {
             throw new AccessingNonAuthorizedResourceException(line: __LINE__);
         }
 
@@ -150,7 +159,7 @@ class TaskService
         }
 
         if ($this->subtaskModel->taskHasActiveSubtask($dto->getId()) && $dto->getStatus() == TaskStatus::FINISHED) {
-            new TaskHasActiveSubtasksException($dto->getId(), line: __LINE__);
+            throw new TaskHasActiveSubtasksException($dto->getId(), line: __LINE__);
         }
 
         $affected = $this->taskModel->updateTaskStatus($dto);
@@ -160,12 +169,16 @@ class TaskService
 
     public function addTaskCategory(AddAndRemoveTaskCategory $dto): CategoryAdditionResponseDTO
     {
-        if ($this->taskModel->existsById($dto->getTaskId())) {
+        if (!$this->taskModel->existsById($dto->getTaskId())) {
             throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
         }
 
-        if ($this->categoryModel->existsById($dto->getCategoryId())) {
+        if (!$this->categoryModel->existsById($dto->getCategoryId())) {
             throw new AccessingNonExistentRecordException($dto->getCategoryId(), 'categories', line: __LINE__);
+        }
+
+        if ($this->categoryModel->taskHasCategory($dto->getTaskId(), $dto->getCategoryId())) {
+            throw new TaskCategoryExistsException($dto->getTaskId(), $dto->getCategoryId()  ,line: __LINE__);
         }
 
         $created = $this->taskModel->addTaskCategory($dto);

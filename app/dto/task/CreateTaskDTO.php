@@ -7,6 +7,7 @@ use DateTimeZone;
 use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\exceptions\MalformedDateException;
 use ghosty\taskmgr\exceptions\MissingParamException;
+use ghosty\taskmgr\exceptions\PriorityOutOfRangeException;
 
 class CreateTaskDTO extends DTO
 {
@@ -47,12 +48,12 @@ class CreateTaskDTO extends DTO
             throw new MissingParamException('deadline', line: __LINE__);
         }
 
-        if (!isset($data['status'])) {
-            throw new MissingParamException('status', line: __LINE__);
-        }
-
         if (str_contains($data['deadline'], '+')) {
             throw new MalformedDateException($data['deadline'], line: __LINE__);
+        }
+
+        if ($data['priority'] < 1 || $data['priority'] > 20) {
+            throw new PriorityOutOfRangeException($data['priority'], line: __LINE__);
         }
 
         try {

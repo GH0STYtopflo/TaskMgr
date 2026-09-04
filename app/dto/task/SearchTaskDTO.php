@@ -7,38 +7,38 @@ use DateTimeZone;
 use ghosty\taskmgr\database\custom_types\TaskStatus;
 use ghosty\taskmgr\dto\DTO;
 use ghosty\taskmgr\exceptions\MalformedDateException;
+use ghosty\taskmgr\exceptions\TypeMismatchException;
 use ghosty\taskmgr\exceptions\WrongPaginationParamsException;
 
 class SearchTaskDTO extends DTO
 {
-    private string $title;
-    private int $priority_higher;
-    private int $priority_lower;
-    private string $deadline_before;
-    private string $deadline_after;
-    private TaskStatus $status;
-    private string $created_before;
-    private string $created_after;
-    private string $updated_before;
-    private string $updated_after;
-    private int $page;
-    private int $limit;
+    private ?string $title;
+    private ?int $priority_higher;
+    private ?int $priority_lower;
+    private ?\DateTimeImmutable $deadline_before;
+    private ?\DateTimeImmutable $deadline_after;
+    private ?TaskStatus $status;
+    private ?\DateTimeImmutable $created_before;
+    private ?\DateTimeImmutable $created_after;
+    private ?\DateTimeImmutable $updated_before;
+    private ?\DateTimeImmutable $updated_after;
+    private ?int $page;
+    private ?int $limit;
 
     public function __construct(
-        string     $title,
-        int        $priority_higher,
-        int        $priority_lower,
-        string     $deadline_before,
-        string     $deadline_after,
-        TaskStatus $status,
-        string     $created_before,
-        string     $created_after,
-        string     $updated_before,
-        string     $updated_after,
-        int        $page,
-        int        $limit
-    )
-    {
+        ?string             $title = null,
+        ?int                $priority_higher = null,
+        ?int                $priority_lower = null,
+        ?\DateTimeImmutable $deadline_before = null,
+        ?\DateTimeImmutable $deadline_after = null,
+        ?TaskStatus         $status = null,
+        ?\DateTimeImmutable $created_before = null,
+        ?\DateTimeImmutable $created_after = null,
+        ?\DateTimeImmutable $updated_before = null,
+        ?\DateTimeImmutable $updated_after = null,
+        ?int                $page = null,
+        ?int                $limit = null
+    ) {
         $this->title = $title;
         $this->priority_higher = $priority_higher;
         $this->priority_lower = $priority_lower;
@@ -52,6 +52,7 @@ class SearchTaskDTO extends DTO
         $this->page = $page;
         $this->limit = $limit;
     }
+
 
 
     public static function fromArray(array $data): self
@@ -73,6 +74,12 @@ class SearchTaskDTO extends DTO
 
         if (isset($data['limit']) && $data['limit'] < 1) {
             throw new WrongPaginationParamsException(line: __LINE__);
+        }
+
+        try {
+            $status = is_null($status) ? null : TaskStatus::from($status);
+        } catch (\ValueError $exception) {
+            throw new TypeMismatchException('status', $data['status'], 'FINISHED, ONGOING, SUBMITTED');
         }
 
         $page = $data['page'] ?? 1;

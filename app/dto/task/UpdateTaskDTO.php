@@ -66,7 +66,7 @@ class UpdateTaskDTO extends DTO
             $data['deadline'] = null;
         }
 
-        if (!is_numeric($data['priority'])) {
+        if (!is_null($data['priority']) && !is_numeric($data['priority'])) {
             throw new TypeMismatchException('priority', "string(" . $data['priority'] . ")", 'int', line: __LINE__);
         }
 

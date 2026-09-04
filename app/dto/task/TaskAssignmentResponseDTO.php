@@ -20,7 +20,7 @@ class TaskAssignmentResponseDTO extends DTO
 
     public static function fromArray(array $data): self
     {
-        return new self($data['user_id'], $data['task_id'], TaskStatus::from($data['status']));
+        return new self($data['user_id'], $data['id'], TaskStatus::from($data['status']));
     }
 
     public function getUserId(): int

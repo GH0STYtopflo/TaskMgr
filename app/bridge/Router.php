@@ -163,19 +163,19 @@ class Router
             'GET /tasks?query' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->searchTasks($data);
             }, true, true],
-            'POST /tasks/{task_id}/users' => [function (array $data, ?AuthorizationContext $context): Response {
+            'POST /tasks/{task_id}:assign_to_user' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->assignTaskToUser($data);
             }, true, true],
-            'DELETE /tasks/{task_id}/users' => [function (array $data, ?AuthorizationContext $context): Response {
+            'DELETE /tasks/{task_id}:discharge_user' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->dischargeTaskFromUser($data);
             }, true, true],
             'PATCH /tasks/{id}:update_status' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->taskController->updateTaskStatus($data, $context);
             }, true, false],
-            'POST /tasks/{task_id}/categories' => [function (array $data, ?AuthorizationContext $context): Response {
+            'POST /tasks/{task_id}:add_category' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->addTaskCategory($data);
             }, true, true],
-            'DELETE /tasks/{task_id}/categories' => [function (array $data, ?AuthorizationContext $context): Response {
+            'DELETE /tasks/{task_id}:remove_category' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->removeTaskCategory($data);
             }, true, true],
             'GET /tasks/{id}/categories' => [function (array $data, AuthorizationContext $context): Response {

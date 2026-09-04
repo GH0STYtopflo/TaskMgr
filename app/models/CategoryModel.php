@@ -168,4 +168,12 @@ class CategoryModel extends Model
             ["task_id" => $dto->getId()]
         )->fetchAll();
     }
+
+    public function taskHasCategory(int $taskId, int $categoryId): bool
+    {
+        return $this->handle->preparedStatement(
+            "SELECT EXISTS(SELECT 1 FROM task_categories WHERE task_id = :task_id AND category_id = :category_id)",
+            ["task_id" => $taskId, "category_id" => $categoryId]
+        )->fetchColumn();
+    }
 }

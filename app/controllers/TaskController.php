@@ -39,7 +39,7 @@ class TaskController
             return $e->createErrResponse();
         }
 
-        return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
+        return Response::makeResponse(201, [Headers::TYPE_JSON], $response);
     }
 
     /**
@@ -143,7 +143,7 @@ class TaskController
             $dto = AssignAndDischargeTaskDTO::fromArray($data);
             $response = $this->taskService->assignTaskToUser($dto);
         } catch (ExceptionTemplate $e) {
-            $e->createErrResponse();
+            return $e->createErrResponse();
         }
 
         return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
@@ -179,14 +179,14 @@ class TaskController
             $dto = UpdateTaskStatusDTO::fromArray($data);
             $response = $this->taskService->updateTaskStatus($dto, $context);
         } catch (ExceptionTemplate $e) {
-            $e->createErrResponse();
+            return $e->createErrResponse();
         }
 
         return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 
     /**
-     * Maps to: POST /tasks/{task_id}/categories
+     * Maps to: POST /tasks/{task_id}:add_category
      *
      * @param array $data
      * @return Response
@@ -204,7 +204,7 @@ class TaskController
     }
 
     /**
-     * Maps to: DELETE /tasks/{task_id}/categories
+     * Maps to: DELETE /tasks/{task_id}:remove_category
      *
      * @param array $data
      * @return Response

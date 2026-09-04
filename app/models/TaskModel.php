@@ -30,7 +30,7 @@ class TaskModel extends Model
             throw new PriorityOutOfRangeException($pri, line: __LINE__);
         }
 
-        $data = $data->toArray() + ['status' => TaskStatus::SUBMITTED]; // pass on submitted during insertion
+        $data = $data->toArray() + ['status' => TaskStatus::SUBMITTED->value]; // pass on submitted during insertion
         $data['deadline'] = $data['deadline']->format(DATE_ATOM);
 
         try {
@@ -92,6 +92,7 @@ class TaskModel extends Model
                  priority = COALESCE(:priority, priority),
                  deadline = COALESCE(:deadline, deadline),
                  updated_at = now()
+                 WHERE id = :id 
                  RETURNING *",
                 $data
             )->fetch();
@@ -126,18 +127,18 @@ class TaskModel extends Model
         try {
             return $this->handle->preparedStatement(
                 "SELECT * FROM tasks WHERE
-                (:title IS NULL OR title LIKE :title) AND 
-                (:priority_higher IS NULL OR priority >= :priority_higer) AND
-                (:priority_lower IS NULL OR priority >= :priority_lower) AND
-                (:deadline_before IS NULL OR deadline <= :deadline_before)AND 
-                (:deadline_after IS NULL OR deadline >= :deadline_after) AND
-                (:status IS NULL OR status = :status) AND 
-                (:created_before IS NULL OR created_at <= :created_before) AND
-                (:created_after IS NULL OR created_at >= :created_after) AND
-                (:updated_before IS NULL OR updated_at <= :updated_before) AND
-                (:updated_after IS NULL OR updated_at >= :updated_after)
-                LIMIT :limit 
-                OFFSET :offset",
+                    (title ILIKE '%' || :title || '%' OR :title IS NULL) AND 
+                    (priority >= :priority_higher OR :priority_higher IS NULL) AND
+                    (priority <= :priority_lower OR :priority_lower IS NULL) AND
+                    (deadline <= :deadline_before OR :deadline_before IS NULL) AND 
+                    (deadline >= :deadline_after OR :deadline_after IS NULL) AND
+                    (status = :status OR :status IS NULL) AND 
+                    (created_at <= :created_before OR :created_before IS NULL) AND
+                    (created_at >= :created_after OR :created_after IS NULL) AND
+                    (updated_at <= :updated_before OR :updated_before IS NULL) AND
+                    (updated_at >= :updated_after OR :updated_after IS NULL)
+                    LIMIT :limit 
+                    OFFSET :offset",
                 $data
             )->fetchAll();
         } catch (PDOException $e) {
@@ -158,9 +159,9 @@ class TaskModel extends Model
                 ['task_id' => $data->getTaskId()]
             )->fetchColumn();
 
-            if ($assignee_count == 1) {
+            if ($assignee_count > 0) {
                 $this->handle->preparedStatement(
-                    "UPDATE tasks SET status = :status, updated_at = now() WHERE id = :task_id", ['status' => TaskStatus::ONGOING,
+                    "UPDATE tasks SET status = :status, updated_at = now() WHERE id = :task_id", ['status' => TaskStatus::ONGOING->value,
                     "task_id" => $data->getTaskId()]);
             }
 
@@ -186,7 +187,7 @@ class TaskModel extends Model
                 ['task_id' => $data->getTaskId()]
             )->fetchColumn();
 
-            if ($assignee_count == 0) {
+            if ($assignee_count < 1) {
                 $this->handle->preparedStatement(
                     "UPDATE tasks SET status = :status, updated_at = now() WHERE id = :task_id",
                     ['status' => TaskStatus::SUBMITTED, "task_id" => $data->getTaskId()]
