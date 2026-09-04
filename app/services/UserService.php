@@ -76,6 +76,19 @@ class UserService
     public function logout(LogoutDTO $dto): void
     {
         try {
+            $exists = $this->handle->preparedStatement(
+                "SELECT EXISTS (SELECT 1 FROM token_black_list where token = :token)",
+                $dto->toArray()
+            )->fetchColumn();
+        } catch (DatabaseException $e) {
+            throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
+        }
+
+        if ($exists) {
+            return;
+        }
+
+        try {
             $this->handle->preparedStatement(
                 "INSERT INTO token_black_list (token) VALUES (:token)",
                 $dto->toArray()
