@@ -15,7 +15,7 @@ use ghosty\taskmgr\dto\task\TaskDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskDTO;
 use ghosty\taskmgr\dto\task\UpdateTaskStatusDTO;
 use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
-use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\exceptions\AccessingNonExistentResourceException;
 use ghosty\taskmgr\exceptions\TaskAssignmentDoesNotExistException;
 use ghosty\taskmgr\exceptions\TaskCategoryDoesNotExistException;
 use ghosty\taskmgr\exceptions\TaskCategoryExistsException;
@@ -57,7 +57,7 @@ class TaskService
     public function deleteTask(FindTaskByIdDTO $dto): void
     {
         if (!$this->taskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException($dto->getId(), 'tasks', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getId(), 'tasks', line: __LINE__);
         }
 
         $this->taskModel->delete($dto);
@@ -68,7 +68,7 @@ class TaskService
         $task = $this->taskModel->findById($dto);
 
         if (!$this->taskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException($dto->getId(), 'tasks', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getId(), 'tasks', line: __LINE__);
         }
 
         if (!is_null($task) && !($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId()))) {
@@ -95,7 +95,7 @@ class TaskService
     public function updateTask(UpdateTaskDTO $dto): TaskDTO
     {
         if (!$this->taskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException(
+            throw new AccessingNonExistentResourceException(
                 $dto->getId(),
                 'tasks',
                 line: __LINE__,
@@ -121,11 +121,11 @@ class TaskService
     public function assignTaskToUser(AssignAndDischargeTaskDTO $dto): TaskAssignmentResponseDTO
     {
         if (!$this->taskModel->existsById($dto->getTaskId())) {
-            throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getTaskId(), 'tasks', line: __LINE__);
         }
 
         if (!$this->userModel->existsById($dto->getUserId())) {
-            throw new AccessingNonExistentRecordException($dto->getUserId(), 'users', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getUserId(), 'users', line: __LINE__);
         }
 
         if ($this->taskModel->isUserAssignedToTask($dto->getUserId(), $dto->getTaskId())) {
@@ -147,7 +147,7 @@ class TaskService
     public function updateTaskStatus(UpdateTaskStatusDTO $dto, AuthorizationContext $context): TaskDTO
     {
         if (!$this->taskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException($dto->getId(), 'tasks', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getId(), 'tasks', line: __LINE__);
         }
 
         if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId()))) {
@@ -170,11 +170,11 @@ class TaskService
     public function addTaskCategory(AddAndRemoveTaskCategory $dto): CategoryAdditionResponseDTO
     {
         if (!$this->taskModel->existsById($dto->getTaskId())) {
-            throw new AccessingNonExistentRecordException($dto->getTaskId(), 'tasks', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getTaskId(), 'tasks', line: __LINE__);
         }
 
         if (!$this->categoryModel->existsById($dto->getCategoryId())) {
-            throw new AccessingNonExistentRecordException($dto->getCategoryId(), 'categories', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getCategoryId(), 'categories', line: __LINE__);
         }
 
         if ($this->categoryModel->taskHasCategory($dto->getTaskId(), $dto->getCategoryId())) {

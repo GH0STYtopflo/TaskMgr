@@ -8,7 +8,7 @@ use ghosty\taskmgr\dto\user\CreateUserDTO;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
 use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
 use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
-use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\exceptions\AccessingNonExistentResourceException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\logger\Severity;
 use ghosty\taskmgr\util\PasswordEncoder;
@@ -67,7 +67,7 @@ class UserModel extends Model
     public function update(DTO | UpdateUsernameDTO | UpdatePasswordDTO $data): array
     {
         if (!$this->existsById($data->getId())) {
-            throw new AccessingNonExistentRecordException($data->getId(), 'users', line: __LINE__);
+            throw new AccessingNonExistentResourceException($data->getId(), 'users', line: __LINE__);
         }
 
         $data = $data->toArray();
@@ -103,7 +103,7 @@ class UserModel extends Model
     public function delete(FindUserByIdDTO | DTO $data): void
     {
         if (!$this->existsById($data->getId())) {
-            throw new AccessingNonExistentRecordException($data->getId(), 'users', line: __LINE__);
+            throw new AccessingNonExistentResourceException($data->getId(), 'users', line: __LINE__);
         }
 
         try {

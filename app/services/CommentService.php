@@ -12,7 +12,7 @@ use ghosty\taskmgr\dto\comment\GetUserCommentsDTO;
 use ghosty\taskmgr\dto\comment\TaskCommentDTO;
 use ghosty\taskmgr\dto\comment\UserCommentDTO;
 use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
-use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\exceptions\AccessingNonExistentResourceException;
 use ghosty\taskmgr\models\CommentModel;
 use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\models\UserModel;
@@ -33,7 +33,7 @@ class CommentService
     public function createComment(CreateCommentDTO $dto, AuthorizationContext $context): CommentDTO
     {
         if (!$this->userModel->existsById($dto->getUserId())) {
-            throw new AccessingNonExistentRecordException(
+            throw new AccessingNonExistentResourceException(
                 $dto->getUserId(),
                 'users',
                 line: __LINE__
@@ -41,7 +41,7 @@ class CommentService
         }
 
         if (!$this->taskModel->existsById($dto->getTaskId())) {
-            throw new AccessingNonExistentRecordException(
+            throw new AccessingNonExistentResourceException(
                 $dto->getTaskId(),
                 'tasks',
                 line: __LINE__
@@ -60,7 +60,7 @@ class CommentService
     public function deleteComment(FindCommentByIdDTO $dto, AuthorizationContext $context): void
     {
         if (!$this->commentModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException($dto->getId(), 'comments', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getId(), 'comments', line: __LINE__);
         }
 
         $isAuthor = $this->commentModel->isAuthor($context->getId(), $dto->getId());
@@ -74,7 +74,7 @@ class CommentService
     public function editComment(EditCommentDTO $dto, AuthorizationContext $context): CommentDTO
     {
         if (!$this->commentModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException(
+            throw new AccessingNonExistentResourceException(
                 $dto->getId(),
                 'comments',
                 line: __LINE__
@@ -135,7 +135,7 @@ class CommentService
     public function getCommentById(FindCommentByIdDTO $dto, AuthorizationContext $context): CommentDTO
     {
         if (!$this->commentModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException($dto->getId(), 'comments', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getId(), 'comments', line: __LINE__);
         }
 
         $isAuthor = $this->commentModel->isAuthor($context->getId(), $dto->getId());

@@ -16,7 +16,7 @@ use ghosty\taskmgr\dto\user\UpdatePasswordDTO;
 use ghosty\taskmgr\dto\user\UpdateUsernameDTO;
 use ghosty\taskmgr\dto\user\UserDTO;
 use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
-use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\exceptions\AccessingNonExistentResourceException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\InvalidCredentials;
 use ghosty\taskmgr\exceptions\UsernameExistsException;
@@ -164,7 +164,7 @@ class UserService
         }
 
         if (!$this->userModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException($dto->getId(), 'users', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getId(), 'users', line: __LINE__);
         }
 
         $tasks = $this->taskModel->getUserTasks($dto);

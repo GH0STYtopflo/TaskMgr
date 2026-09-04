@@ -5,7 +5,7 @@ namespace ghosty\taskmgr\bridge\authentication;
 use ghosty\taskmgr\database\DBHandle;
 use ghosty\taskmgr\dto\AuthorizationContext;
 use ghosty\taskmgr\dto\user\FindUserByIdDTO;
-use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\exceptions\AccessingNonExistentResourceException;
 use ghosty\taskmgr\exceptions\DatabaseException;
 use ghosty\taskmgr\exceptions\InvalidTokenException;
 use ghosty\taskmgr\exceptions\TokenNotProvidedException;
@@ -39,7 +39,7 @@ class Authentication
      *
      * @throws TokenNotProvidedException
      * @throws WrongAuthenticationMethodException
-     * @throws AccessingNonExistentRecordException
+     * @throws AccessingNonExistentResourceException
      * @throws DatabaseException
  */
     public function authenticate(array $headers): AuthorizationContext

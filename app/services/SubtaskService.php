@@ -11,7 +11,7 @@ use ghosty\taskmgr\dto\subtask\SetSubtaskStatusDTO;
 use ghosty\taskmgr\dto\subtask\SubtaskDTO;
 use ghosty\taskmgr\dto\subtask\UpdateSubtaskTitleDTO;
 use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
-use ghosty\taskmgr\exceptions\AccessingNonExistentRecordException;
+use ghosty\taskmgr\exceptions\AccessingNonExistentResourceException;
 use ghosty\taskmgr\exceptions\SubtaskExistsException;
 use ghosty\taskmgr\models\SubTaskModel;
 use ghosty\taskmgr\models\TaskModel;
@@ -30,7 +30,7 @@ class SubtaskService
     public function createSubtask(CreateSubtaskDTO $dto): SubtaskDTO
     {
         if (!$this->taskModel->existsById($dto->getTaskId())) {
-            throw new AccessingNonExistentRecordException($dto->getTaskID(), 'tasks', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getTaskID(), 'tasks', line: __LINE__);
         }
 
         if ($this->subTaskModel->existsByTitleForTask($dto->getTitle(), $dto->getTaskId())) {
@@ -45,7 +45,7 @@ class SubtaskService
     public function deleteSubtask(FindSubtaskById $dto): void
     {
         if (!$this->subTaskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException($dto->getId(), 'sub_tasks', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getId(), 'sub_tasks', line: __LINE__);
         }
 
         $this->subTaskModel->delete($dto);
@@ -54,7 +54,7 @@ class SubtaskService
     public function getSubtaskById(FindSubtaskById $dto, AuthorizationContext $context): ?SubtaskDTO
     {
         if (!$this->subTaskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException($dto->getId(), 'sub_tasks', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getId(), 'sub_tasks', line: __LINE__);
         }
 
         $taskId = $this->subTaskModel->getSubtaskTaskId($dto->getId());
@@ -85,7 +85,7 @@ class SubtaskService
     public function getTaskSubtasks(GetTaskSubtask $dto, AuthorizationContext $context): array
     {
         if (!$this->taskModel->existsById($dto->getTaskId())) {
-            throw new AccessingNonExistentRecordException($dto->getTaskID(), 'tasks', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getTaskID(), 'tasks', line: __LINE__);
         }
 
         if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getTaskId()))) {
@@ -104,7 +104,7 @@ class SubtaskService
     public function updateSubtaskStatus(SetSubtaskStatusDTO $dto, AuthorizationContext $context): SubtaskDTO
     {
         if (!$this->subTaskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException($dto->getId(), 'sub_tasks', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getId(), 'sub_tasks', line: __LINE__);
         }
 
         $taskId = $this->subTaskModel->getSubtaskTaskId($dto->getId());
@@ -120,7 +120,7 @@ class SubtaskService
     public function updateSubtaskTitle(UpdateSubtaskTitleDTO $dto): SubtaskDTO
     {
         if (!$this->subTaskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentRecordException($dto->getId(), 'sub_tasks', line: __LINE__);
+            throw new AccessingNonExistentResourceException($dto->getId(), 'sub_tasks', line: __LINE__);
         }
 
         $affected = $this->subTaskModel->update($dto);
