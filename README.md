@@ -139,7 +139,7 @@ Relationships:
 The project uses the following PHP dependency:
 - `firebase/php-jwt` (^6.10) — For JWT token generation and validation
 
-Install dependencies using Composer:
+Install dependencies using Composer (no need for this step. Happens in container):
 ```bash
 composer install
 ```
