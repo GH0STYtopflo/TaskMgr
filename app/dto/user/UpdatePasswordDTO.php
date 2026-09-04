@@ -9,16 +9,14 @@ use ghosty\taskmgr\exceptions\TypeMismatchException;
 class UpdatePasswordDTO extends DTO
 {
     private int $id;
+    private string $old_password;
     private string $new_password;
 
-    /**
-     * @param int $id
-     * @param string $new_password
-     */
-    public function __construct(int $id, string $new_password)
+    public function __construct(int $id, string $new_password, string $old_password)
     {
         $this->id = $id;
         $this->new_password = $new_password;
+        $this->old_password = $old_password;
     }
 
 
@@ -26,6 +24,10 @@ class UpdatePasswordDTO extends DTO
     {
         if (!isset($data["id"])) {
             throw new MissingParamException('id', line: __LINE__);
+        }
+
+        if (!isset($data["old_password"])) {
+            throw new MissingParamException('old_password', line: __LINE__);
         }
 
         if (!isset($data["new_password"])) {
@@ -41,7 +43,7 @@ class UpdatePasswordDTO extends DTO
             );
         }
 
-        return new self((int) $data["id"], $data["new_password"]);
+        return new self($data["id"], $data["new_password"], $data["old_password"]);
     }
 
     public function toArray(): array
@@ -59,5 +61,10 @@ class UpdatePasswordDTO extends DTO
     public function getNewPassword(): string
     {
         return $this->new_password;
+    }
+
+    public function getOldPassword(): string
+    {
+        return $this->old_password;
     }
 }

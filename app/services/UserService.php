@@ -73,12 +73,22 @@ class UserService
     }
 
     // This defeats the whole point of jwt auth, but it's required in the project specifications
-    public function logout(LogoutDTO $dto): void
+    public function logout(LogoutDTO $dto, AuthorizationContext $context): void
     {
+        $user = $this->userModel->findById(new FindUserByIdDTO($context->getId()));
+
+        if (empty($user)) {
+            throw new AccessingNonExistentResourceException($context->getId());
+        }
+
+        if (!PasswordEncoder::matches($dto->getPassword(), $user['password_hash'])) {
+            throw new InvalidCredentials(line: __LINE__);
+        }
+
         try {
             $exists = $this->handle->preparedStatement(
                 "SELECT EXISTS (SELECT 1 FROM token_black_list where token = :token)",
-                $dto->toArray()
+                ['token' => $dto->getToken()]
             )->fetchColumn();
         } catch (DatabaseException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
@@ -91,7 +101,7 @@ class UserService
         try {
             $this->handle->preparedStatement(
                 "INSERT INTO token_black_list (token) VALUES (:token)",
-                $dto->toArray()
+                ['token' => $dto->getToken()]
             );
         } catch (DatabaseException $e) {
             throw new DatabaseException($e->getMessage(), 500, Severity::WARNING, $e, __LINE__);
@@ -139,6 +149,15 @@ class UserService
             throw new AccessingNonAuthorizedResourceException(line: __LINE__);
         }
 
+        $user = $this->userModel->findById(new FindUserByIdDTO($context->getId()));
+        if (empty($user)) {
+            throw new AccessingNonExistentResourceException($context->getId());
+        }
+
+        if (!PasswordEncoder::matches($dto->getPassword(), $user['password_hash'])) {
+            throw new InvalidCredentials(line: __LINE__);
+        }
+
         if ($this->userModel->existsByUsername($dto->getNewUsername())) {
             throw new UsernameExistsException($dto->getNewUsername(), __LINE__);
         }
@@ -152,6 +171,16 @@ class UserService
     {
         if (!($context->isAdmin() || $context->getId() == $dto->getId())) {
             throw new AccessingNonAuthorizedResourceException(line: __LINE__);
+        }
+
+        $user = $this->userModel->findById(new FindUserByIdDTO($context->getId()));
+
+        if (empty($user)) {
+            throw new AccessingNonExistentResourceException($context->getId());
+        }
+
+        if (!PasswordEncoder::matches($dto->getOldPassword(), $user['password_hash'])) {
+            throw new InvalidCredentials(line: __LINE__);
         }
 
         $this->userModel->update($dto);

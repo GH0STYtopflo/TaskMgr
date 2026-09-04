@@ -82,6 +82,8 @@ class UserModel extends Model
 
         unset($data['new_password']);
         unset($data['new_username']);
+        unset($data['password']);
+        unset($data['old_password']);
 
         try {
             $affected = $this->handle->preparedStatement(

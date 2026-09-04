@@ -9,16 +9,15 @@ use ghosty\taskmgr\exceptions\TypeMismatchException;
 class UpdateUsernameDTO extends DTO
 {
     private int $id;
+
+    private string $password;
     private string $new_username;
 
-    /**
-     * @param int $id
-     * @param string $new_username
-     */
-    public function __construct(int $id, string $new_username)
+    public function __construct(int $id, string $new_username, string $password)
     {
         $this->id = $id;
         $this->new_username = $new_username;
+        $this->password = $password;
     }
 
     public static function fromArray(array $data): self
@@ -31,6 +30,10 @@ class UpdateUsernameDTO extends DTO
             throw new MissingParamException('new_username', line: __LINE__);
         }
 
+        if (!isset($data["password"])) {
+            throw new MissingParamException('password', line: __LINE__);
+        }
+
         if (!is_numeric($data["id"])) {
             throw new TypeMismatchException(
                 'id',
@@ -40,7 +43,7 @@ class UpdateUsernameDTO extends DTO
             );
         }
 
-        return new self($data["id"], $data["new_username"]);
+        return new self($data["id"], $data["new_username"], $data["password"]);
     }
 
     public function toArray(): array
@@ -58,5 +61,10 @@ class UpdateUsernameDTO extends DTO
     public function getNewUsername(): string
     {
         return $this->new_username;
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password;
     }
 }

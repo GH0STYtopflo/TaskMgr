@@ -67,8 +67,8 @@ class Router
 
             // Logout
             'POST /logout' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->userController->logout($data);
-            }, false, false],
+                return $this->userController->logout($data, $context);
+            }, true, false],
 
             // Signup
             'POST /signup' => [function (array $data): Response {
@@ -201,7 +201,7 @@ class Router
             'PATCH /users/{id}:update_password' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->userController->updatePassword($data, $context);
             }, true, false],
-            'GET /users/{id}/tasks' => [function (array $data, AuthorizationContext $context): Response { //TODO: CHECK THIS TOO
+            'GET /users/{id}/tasks' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->userController->getUserTasks($data, $context);
             }, true, false],
         ];

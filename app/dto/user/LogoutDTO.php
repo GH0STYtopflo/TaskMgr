@@ -8,14 +8,13 @@ use ghosty\taskmgr\exceptions\MissingParamException;
 class LogoutDTO extends DTO
 {
     private string $token;
+    private string $password;
 
-    /**
-     * @param string $token
-     */
-    public function __construct(string $token)
+    public function __construct(string $token, string $password)
     {
         $segments = explode('.', $token);
         $this->token = $segments[1] . $segments[2]; // trying to reduce the pressure on db
+        $this->password = $password;
     }
 
     public static function fromArray(array $data): self
@@ -24,11 +23,20 @@ class LogoutDTO extends DTO
             throw new MissingParamException('token', line: __LINE__);
         }
 
-        return new self($data['token']);
+        if (!isset($data['password'])) {
+            throw new MissingParamException('password', line: __LINE__);
+        }
+
+        return new self($data['token'], $data['password']);
     }
 
     public function getToken(): string
     {
         return $this->token;
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password;
     }
 }

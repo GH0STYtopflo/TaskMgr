@@ -62,11 +62,11 @@ class UserController
         return Response::makeResponse(200, [Headers::TYPE_JSON], $response);
     }
 
-    public function logout(array $data): Response
+    public function logout(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = LogoutDto::fromArray($data);
-            $this->userService->logout($dto);
+            $this->userService->logout($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
