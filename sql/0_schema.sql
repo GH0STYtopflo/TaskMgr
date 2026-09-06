@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS user_tasks (
 
 CREATE TABLE IF NOT EXISTS task_categories (
     task_id BIGINT REFERENCES tasks(id) ON DELETE CASCADE,
-    category_id BIGINT REFERENCES categories(id),
+    category_id BIGINT REFERENCES categories(id) ON DELETE CASCADE,
 
     CONSTRAINT pk_task_categories PRIMARY KEY (task_id, category_id)
 );
