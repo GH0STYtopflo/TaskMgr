@@ -1,15 +1,15 @@
-FROM php:8.4
+FROM php:8.4-cli-alpine
 
 WORKDIR /app
 
 # I had to install pgsql libraries
-RUN apt-get update && apt-get install -y libpq-dev unzip libzip-dev && rm -rf /var/lib/apt/lists/*
-
-COPY . .
+RUN apk add postgresql-dev libzip-dev unzip --no-cache
 
 RUN docker-php-ext-install pdo pdo_pgsql zip
 
 RUN curl https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+COPY . .
 
 RUN composer install
 
