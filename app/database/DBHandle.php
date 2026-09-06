@@ -84,14 +84,14 @@ class DBHandle
      */
     public function exec(string $sql): int
     {
-        $effected = $this->connection->exec($sql);
+        $affected = $this->connection->exec($sql);
 
-        if (!$effected) {
+        if (is_bool($affected) && !$affected) {
             throw new DatabaseException(
                 "Exec failed: {$sql}",
                 severity: Severity::WARNING,
                 line: __LINE__
             );
-        } else return $effected;
+        } else return $affected;
     }
 }
