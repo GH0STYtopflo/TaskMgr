@@ -2,6 +2,8 @@
 
 namespace ghosty\taskmgr\services;
 
+use ghosty\taskmgr\database\custom_types\ActionStatus;
+use ghosty\taskmgr\database\custom_types\ResourceType;
 use ghosty\taskmgr\dto\AuthorizationContext;
 use ghosty\taskmgr\dto\category\CategoryDTO;
 use ghosty\taskmgr\dto\category\CreateCategoryDTO;
@@ -9,25 +11,29 @@ use ghosty\taskmgr\dto\category\FindCategoryByIdDTO;
 use ghosty\taskmgr\dto\category\SearchCategoryDTO;
 use ghosty\taskmgr\dto\category\TaskCategoryDTO;
 use ghosty\taskmgr\dto\category\UpdateCategoryDTO;
+use ghosty\taskmgr\dto\log\LogDTO;
 use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
 use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
 use ghosty\taskmgr\exceptions\AccessingNonExistentResourceException;
 use ghosty\taskmgr\exceptions\CategoryExistsException;
 use ghosty\taskmgr\models\CategoryModel;
+use ghosty\taskmgr\models\LogModel;
 use ghosty\taskmgr\models\TaskModel;
 
 class CategoryService
 {
     private CategoryModel $categoryModel;
     private TaskModel $taskModel;
+    private LogModel $logModel;
 
-    public function __construct(CategoryModel $categoryModel, TaskModel $taskModel)
+    public function __construct(CategoryModel $categoryModel, TaskModel $taskModel, LogModel $logModel)
     {
         $this->categoryModel = $categoryModel;
         $this->taskModel = $taskModel;
+        $this->logModel = $logModel;
     }
 
-    public function createCategory(CreateCategoryDTO $dto): CategoryDTO
+    public function createCategory(CreateCategoryDTO $dto, AuthorizationContext $context): CategoryDTO
     {
         if ($this->categoryModel->existsByTitle($dto->getTitle())) {
             throw new CategoryExistsException(
@@ -36,9 +42,9 @@ class CategoryService
             );
         }
 
-        $created = $this->categoryModel->insert($dto);
+        $created = CategoryDTO::fromArray($this->categoryModel->insert($dto));
 
-        return CategoryDTO::fromArray($created);
+        return $created;
     }
 
     public function updateCategory(UpdateCategoryDTO $dto): CategoryDTO

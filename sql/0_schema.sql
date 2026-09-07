@@ -4,6 +4,20 @@ CREATE TYPE STATUS AS ENUM (
     'FINISHED'
 );
 
+CREATE TYPE ACTION_STATUS AS enum (
+    'SUCCESS',
+    'FAILURE',
+    'NA'
+);
+
+CREATE TYPE RESOURCE_TYPE AS enum (
+    'USER',
+    'TASK',
+    'SUBTASK',
+    'CATEGORY',
+    'COMMENT',
+    'NA'
+);
 
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -59,6 +73,17 @@ CREATE TABLE IF NOT EXISTS task_categories (
 
 CREATE TABLE IF NOT EXISTS token_black_list (
     token VARCHAR NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS actions_logs (
+    resource_id BIGINT NULL,
+    user_id BIGINT NOT NULL,
+    resource_type RESOURCE_TYPE NOT NULL,
+    description VARCHAR NOT NULL,
+    action_status ACTION_STATUS NOT NULL,
+    timestamp TIMESTAMPTZ default now(),
+
+    constraint no_resource_check check ((resource_id IS NULL AND resource_type = 'NA') OR (resource_id IS NOT NULL AND resource_type != 'NA'))
 );
 
 CREATE INDEX idx_tasks_priority ON tasks(priority);
