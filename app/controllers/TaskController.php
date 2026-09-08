@@ -30,11 +30,11 @@ class TaskController
      * @param array $taskData
      * @return Response
      */
-    public function createTask(array $taskData): Response
+    public function createTask(array $taskData, AuthorizationContext $context): Response
     {
         try {
             $dto = CreateTaskDTO::fromArray($taskData);
-            $response = $this->taskService->createTask($dto);
+            $response = $this->taskService->createTask($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -48,11 +48,11 @@ class TaskController
      * @param array $data
      * @return Response
      */
-    public function deleteTask(array $data): Response
+    public function deleteTask(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindTaskByIdDTO::fromArray($data);
-            $this->taskService->deleteTask($dto);
+            $this->taskService->deleteTask($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -84,10 +84,10 @@ class TaskController
      *
      * @return Response
      */
-    public function getAllTasks(): Response
+    public function getAllTasks(AuthorizationContext $context): Response
     {
         try {
-            $response = $this->taskService->getAllTasks();
+            $response = $this->taskService->getAllTasks($context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -101,11 +101,11 @@ class TaskController
      * @param array $data
      * @return Response
      */
-    public function updateTask(array $data): Response
+    public function updateTask(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = UpdateTaskDTO::fromArray($data);
-            $response = $this->taskService->updateTask($dto);
+            $response = $this->taskService->updateTask($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -119,11 +119,11 @@ class TaskController
      * @param array $data
      * @return Response
      */
-    public function searchTasks(array $data): Response
+    public function searchTasks(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = SearchTaskDTO::fromArray($data);
-            $response = $this->taskService->search($dto);
+            $response = $this->taskService->search($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -137,11 +137,11 @@ class TaskController
      * @param array $data
      * @return Response
      */
-    public function assignTaskToUser(array $data): Response
+    public function assignTaskToUser(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = AssignAndDischargeTaskDTO::fromArray($data);
-            $response = $this->taskService->assignTaskToUser($dto);
+            $response = $this->taskService->assignTaskToUser($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -155,11 +155,11 @@ class TaskController
      * @param array $data
      * @return Response
      */
-    public function dischargeTaskFromUser(array $data): Response
+    public function dischargeTaskFromUser(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = AssignAndDischargeTaskDTO::fromArray($data);
-            $this->taskService->disChargeUserFromTask($dto);
+            $this->taskService->disChargeUserFromTask($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -191,11 +191,11 @@ class TaskController
      * @param array $data
      * @return Response
      */
-    public function addTaskCategory(array $data): Response
+    public function addTaskCategory(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = AddAndRemoveTaskCategory::fromArray($data);
-            $response = $this->taskService->addTaskCategory($dto);
+            $response = $this->taskService->addTaskCategory($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -209,11 +209,11 @@ class TaskController
      * @param array $data
      * @return Response
      */
-    public function removeTaskCategory(array $data): Response
+    public function removeTaskCategory(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = AddAndRemoveTaskCategory::fromArray($data);
-            $this->taskService->removeTaskCategory($dto);
+            $this->taskService->removeTaskCategory($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }

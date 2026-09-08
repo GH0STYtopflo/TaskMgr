@@ -2,8 +2,12 @@
 
 namespace ghosty\taskmgr\services;
 
+use DateTimeImmutable;
+use ghosty\taskmgr\database\custom_types\ActionStatus;
+use ghosty\taskmgr\database\custom_types\ResourceType;
 use ghosty\taskmgr\database\custom_types\TaskStatus;
 use ghosty\taskmgr\dto\AuthorizationContext;
+use ghosty\taskmgr\dto\log\LogDTO;
 use ghosty\taskmgr\dto\task\AddAndRemoveTaskCategory;
 use ghosty\taskmgr\dto\task\AssignAndDischargeTaskDTO;
 use ghosty\taskmgr\dto\task\CategoryAdditionResponseDTO;
@@ -23,6 +27,7 @@ use ghosty\taskmgr\exceptions\TaskHasActiveSubtasksException;
 use ghosty\taskmgr\exceptions\UpdatingTaskStatusToSubmittedException;
 use ghosty\taskmgr\exceptions\UserAlreadyAssignedException;
 use ghosty\taskmgr\models\CategoryModel;
+use ghosty\taskmgr\models\LogModel;
 use ghosty\taskmgr\models\SubTaskModel;
 use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\models\UserModel;
@@ -34,164 +39,410 @@ class TaskService
     private CategoryModel $categoryModel;
 
     private SubtaskModel $subtaskModel;
+    private LogModel $logModel;
 
     public function __construct(
         TaskModel     $taskModel,
         UserModel     $userModel,
         CategoryModel $categoryModel,
-        SubtaskModel  $subtaskModel)
+        SubtaskModel  $subtaskModel,
+        LogModel      $logModel
+    )
     {
         $this->taskModel = $taskModel;
         $this->userModel = $userModel;
         $this->categoryModel = $categoryModel;
         $this->subtaskModel = $subtaskModel;
+        $this->logModel = $logModel;
     }
 
-    public function createTask(CreateTaskDTO $dto): TaskDTO
+    public function createTask(CreateTaskDTO $dto, AuthorizationContext $context): TaskDTO
     {
-        $created = $this->taskModel->insert($dto);
+        $log = LogDTO::builder()->setUserId($context->getId())->setResourceType(ResourceType::TASK)
+            ->setTimestamp(new DateTimeImmutable('now'));
 
-        return TaskDTO::fromArray($created);
-    }
+        try {
+            $created = TaskDTO::fromArray($this->taskModel->insert($dto));
 
-    public function deleteTask(FindTaskByIdDTO $dto): void
-    {
-        if (!$this->taskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentResourceException($dto->getId(), 'tasks', line: __LINE__);
+
+            $log->setDescription(
+                "Created task"
+            )
+                ->setActionStatus(ActionStatus::SUCCESS)
+                ->setResourceId($created->getId());
+
+            return $created;
+        } catch (\Exception $e) {
+            $log->setDescription("Failed to create task. reason: " . $e->getMessage());
+
+            throw $e;
+        } finally {
+            $this->logModel->log($log);
         }
+    }
 
-        $this->taskModel->delete($dto);
+    public function deleteTask(FindTaskByIdDTO $dto, AuthorizationContext $context): void
+    {
+        $log = LogDTO::builder()->setResourceType(ResourceType::TASK)
+            ->setTimestamp(new DateTimeImmutable('now'))->setUserId($context->getId());
+
+        try {
+            if (!$this->taskModel->existsById($dto->getId())) {
+                throw new AccessingNonExistentResourceException($dto->getId(), 'tasks', line: __LINE__);
+            }
+            $this->taskModel->delete($dto);
+
+            $log->setResourceId($dto->getId())->setDescription(
+                "Deleted task with id {$dto->getId()}"
+            )->setActionStatus(ActionStatus::SUCCESS)->setResourceId($dto->getId());
+        } catch (\Exception $e) {
+            $log->setDescription("Failed to delete task with id {$dto->getId()}. reason: " . $e->getMessage())
+            ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getId())
+            ->setActionStatus(ActionStatus::FAILURE);
+
+            throw $e;
+        } finally {
+            $this->logModel->log($log);
+        }
     }
 
     public function getTaskById(FindTaskByIdDTO $dto, AuthorizationContext $context): ?TaskDTO
     {
-        $task = $this->taskModel->findById($dto);
+        $log = LogDTO::builder()->setResourceType(ResourceType::TASK)
+            ->setTimestamp(new DateTimeImmutable('now'))->setUserId($context->getId());
 
-        if (!$this->taskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentResourceException($dto->getId(), 'tasks', line: __LINE__);
-        }
-
-        if (!is_null($task) && !($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId()))) {
-            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
-        }
-        if (is_null($task)) {
-            return null;
-        }
-
-        return TaskDTO::fromArray($task);
-    }
-
-    public function getAllTasks(): array
-    {
-        $tasks = $this->taskModel->findAll();
-
-        foreach ($tasks as &$task) {
+        try {
+            $task = $this->taskModel->findById($dto);
+            if (!$this->taskModel->existsById($dto->getId())) {
+                throw new AccessingNonExistentResourceException($dto->getId(), 'tasks', line: __LINE__);
+            }
+            if (!is_null($task) && !($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId()))) {
+                throw new AccessingNonAuthorizedResourceException(line: __LINE__);
+            }
+            if (is_null($task)) {
+                return null;
+            }
             $task = TaskDTO::fromArray($task);
-        }
 
-        return $tasks;
+            $log->setDescription(
+                "Fetched task with id {$dto->getId()}"
+            )->setActionStatus(ActionStatus::SUCCESS)->setResourceId($dto->getId());
+
+            return $task;
+        } catch (\Exception $e) {
+            $log->setDescription("Failed to get task with id {$dto->getId()}. reason: " . $e->getMessage())
+            ->setActionStatus(ActionStatus::FAILURE)->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getId());
+
+            throw $e;
+        } finally {
+            $this->logModel->log($log);
+        }
     }
 
-    public function updateTask(UpdateTaskDTO $dto): TaskDTO
+    public function getAllTasks(AuthorizationContext $context): array
     {
-        if (!$this->taskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentResourceException(
-                $dto->getId(),
-                'tasks',
-                line: __LINE__,
-            );
+        $log = LogDTO::builder()->setResourceType(ResourceType::TASK)->setUserId($context->getId())
+            ->setTimestamp(new DateTimeImmutable('now'));
+
+        try {
+            $tasks = $this->taskModel->findAll();
+            foreach ($tasks as &$task) {
+                $task = TaskDTO::fromArray($task);
+            }
+
+            $log->setDescription(
+                "Fetched all tasks"
+            )->setActionStatus(ActionStatus::SUCCESS);
+
+            return $tasks;
+        } catch (\Exception $e) {
+            $log->setDescription("Failed to fetch tasks. reason: " . $e->getMessage())->setActionStatus(ActionStatus::FAILURE);
+
+            throw $e;
+        } finally {
+            $this->logModel->log($log);
         }
-
-        $affected = $this->taskModel->update($dto);
-
-        return TaskDTO::fromArray($affected);
     }
 
-    public function search(SearchTaskDTO $dto): array
+    public function updateTask(UpdateTaskDTO $dto, AuthorizationContext $context): TaskDTO
     {
-        $tasks = $this->taskModel->search($dto);
+        $log = LogDTO::builder()->setResourceType(ResourceType::TASK)
+            ->setTimestamp(new DateTimeImmutable('now'))->setUserId($context->getId());
 
-        foreach ($tasks as &$task) {
-            $task = TaskDTO::fromArray($task);
+        try {
+            if (!$this->taskModel->existsById($dto->getId())) {
+                throw new AccessingNonExistentResourceException(
+                    $dto->getId(),
+                    'tasks',
+                    line: __LINE__,
+                );
+            }
+            $affected = TaskDTO::fromArray($this->taskModel->update($dto));
+
+            $log->setDescription(
+                "Updated task with id {$dto->getId()}. Update: " . json_encode($dto)
+            )->setActionStatus(ActionStatus::SUCCESS)->setResourceId($dto->getId());
+
+            return $affected;
+        } catch (\Exception $e) {
+            $log->setDescription(
+                "Failed to update task with id {$dto->getId()}. Update: " . json_encode($dto) . ". reason: " . $e->getMessage()
+            )
+                ->setActionStatus(ActionStatus::FAILURE)
+                ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getId());
+
+            throw $e;
+        } finally {
+            $this->logModel->log($log);
         }
+    }
 
-        return $tasks;
+    public function search(SearchTaskDTO $dto, AuthorizationContext $context): array
+    {
+        $log = LogDTO::builder()->setResourceType(ResourceType::TASK)->setUserId($context->getId())
+            ->setTimestamp(new DateTimeImmutable('now'));
+
+        try {
+            $tasks = $this->taskModel->search($dto);
+            foreach ($tasks as &$task) {
+                $task = TaskDTO::fromArray($task);
+            }
+
+            $log->setDescription(
+                "Queried tasks with params: " . json_encode($tasks)
+            )->setActionStatus(ActionStatus::SUCCESS);
+
+            return $tasks;
+        } catch (\Exception $e) {
+            $log->setDescription(
+                "failed to query tasks with params: " . json_encode($tasks) . ". reason: " . $e->getMessage()
+            )->setActionStatus(ActionStatus::FAILURE);
+
+            throw $e;
+        } finally {
+            $this->logModel->log($log);
+        }
     }
 
     public function assignTaskToUser(AssignAndDischargeTaskDTO $dto): TaskAssignmentResponseDTO
     {
-        if (!$this->taskModel->existsById($dto->getTaskId())) {
-            throw new AccessingNonExistentResourceException($dto->getTaskId(), 'tasks', line: __LINE__);
-        }
+        $logA = LogDTO::builder()->setResourceType(ResourceType::TASK)
+            ->setTimestamp(new DateTimeImmutable('now'));
+        $logB = LogDTO::builder()->setResourceType(ResourceType::USER)
+            ->setTimestamp(new DateTimeImmutable('now'));
 
-        if (!$this->userModel->existsById($dto->getUserId())) {
-            throw new AccessingNonExistentResourceException($dto->getUserId(), 'users', line: __LINE__);
-        }
+        try {
+            if (!$this->taskModel->existsById($dto->getTaskId())) {
+                throw new AccessingNonExistentResourceException($dto->getTaskId(), 'tasks', line: __LINE__);
+            }
+            if (!$this->userModel->existsById($dto->getUserId())) {
+                throw new AccessingNonExistentResourceException($dto->getUserId(), 'users', line: __LINE__);
+            }
+            if ($this->taskModel->isUserAssignedToTask($dto->getUserId(), $dto->getTaskId())) {
+                throw new UserAlreadyAssignedException($dto->getUserId(), $dto->getTaskId());
+            }
 
-        if ($this->taskModel->isUserAssignedToTask($dto->getUserId(), $dto->getTaskId())) {
-            throw new UserAlreadyAssignedException($dto->getUserId(), $dto->getTaskId());
-        }
+            $assignment = TaskAssignmentResponseDTO::fromArray($this->taskModel->assignTaskToUser($dto));
 
-        return TaskAssignmentResponseDTO::fromArray($this->taskModel->assignTaskToUser($dto));
+            $logA->setDescription(
+                "Assigned user {$dto->getUserId()} to task {$dto->getTaskId()}"
+            )->setActionStatus(ActionStatus::SUCCESS)->setResourceId($dto->getTaskId());
+
+            $logB->setDescription("Assigned user {$dto->getUserId()} to task {$dto->getTaskId()}")
+            ->setActionStatus(ActionStatus::SUCCESS)->setResourceId($dto->getUserId());
+
+            return $assignment;
+        } catch (\Exception $e) {
+            $logA->setDescription(
+                "Failed to assign user {$dto->getUserId()} to task {$dto->getTaskId()}. reason: " . json_encode($e->getMessage())
+            )
+                ->setActionStatus(ActionStatus::FAILURE)
+                ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getTaskId());
+            $logB
+                ->setDescription("Failed to assign user {$dto->getUserId()} to task {$dto->getTaskId()}. reason: " . json_encode($e->getMessage()))
+                ->setActionStatus(ActionStatus::FAILURE)
+                ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getUserId());
+
+            throw $e;
+        } finally {
+            $this->logModel->log($logA);
+            $this->logModel->log($logB);
+        }
     }
 
-    public function disChargeUserFromTask(AssignAndDischargeTaskDTO $dto): void
+    public function disChargeUserFromTask(AssignAndDischargeTaskDTO $dto, AuthorizationContext $context): void
     {
-        if (!$this->taskModel->assignmentExists($dto)) {
-            throw new TaskAssignmentDoesNotExistException($dto->getUserId(), $dto->getTaskId(), line: __LINE__);
-        }
+        $logA = LogDTO::builder()->setResourceType(ResourceType::TASK)->setUserId($context->getId())
+            ->setTimestamp(new DateTimeImmutable('now'));
+        $logB = LogDTO::builder()->setResourceType(ResourceType::USER)->setUserId($context->getId())
+            ->setTimestamp(new DateTimeImmutable('now'));
 
-        $this->taskModel->dischargeUserFromTask($dto);
+        try {
+            if (!$this->taskModel->assignmentExists($dto)) {
+                throw new TaskAssignmentDoesNotExistException($dto->getUserId(), $dto->getTaskId(), line: __LINE__);
+            }
+            $this->taskModel->dischargeUserFromTask($dto);
+
+            $logA->setDescription(
+                "Discharged user {$dto->getUserId()} from task {$dto->getTaskId()}"
+            )->setActionStatus(ActionStatus::SUCCESS)->setResourceId($dto->getTaskId());
+
+            $logB->setDescription(
+                "Discharged user {$dto->getUserId()} from task {$dto->getTaskId()}"
+            )->setActionStatus(ActionStatus::SUCCESS)->setResourceId($dto->getUserId());
+
+        } catch (\Exception $e) {
+            $logA->setDescription(
+                "Failed to discharge user {$dto->getUserId()} to task {$dto->getTaskId()}. reason: "  . $e->getMessage())
+                ->setActionStatus(ActionStatus::FAILURE)
+                ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getTaskId());
+
+            $logB->setDescription(
+                "Failed to discharge user {$dto->getUserId()} to task {$dto->getTaskId()}. reason: "  . $e->getMessage())
+                ->setActionStatus(ActionStatus::FAILURE)
+                ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getUserId());
+
+            throw $e;
+        } finally {
+            $this->logModel->log($logA);
+            $this->logModel->log($logB);
+        }
     }
 
     public function updateTaskStatus(UpdateTaskStatusDTO $dto, AuthorizationContext $context): TaskDTO
     {
-        if (!$this->taskModel->existsById($dto->getId())) {
-            throw new AccessingNonExistentResourceException($dto->getId(), 'tasks', line: __LINE__);
+        $log = LogDTO::builder()->setResourceType(ResourceType::TASK)
+            ->setTimestamp(new DateTimeImmutable('now'))->setUserId($context->getId());
+
+        try {
+            if (!$this->taskModel->existsById($dto->getId())) {
+                throw new AccessingNonExistentResourceException($dto->getId(), 'tasks', line: __LINE__);
+            }
+            if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId()))) {
+                throw new AccessingNonAuthorizedResourceException(line: __LINE__);
+            }
+            if ($dto->getStatus() == TaskStatus::SUBMITTED) {
+                throw new UpdatingTaskStatusToSubmittedException(line: __LINE__);
+            }
+            if ($this->subtaskModel->taskHasActiveSubtask($dto->getId()) && $dto->getStatus() == TaskStatus::FINISHED) {
+                throw new TaskHasActiveSubtasksException($dto->getId(), line: __LINE__);
+            }
+            $affected = TaskDTO::fromArray($this->taskModel->updateTaskStatus($dto));
+
+            $log->setDescription(
+                "Updated task status of task {$dto->getId()} to {$dto->getStatus()}"
+            )
+                ->setActionStatus(ActionStatus::SUCCESS)
+                ->setResourceId($dto->getId());
+
+            return $affected;
+        } catch (\Exception $e) {
+            $log->setDescription(
+                "Failed to update task status of task {$dto->getId()} to {$dto->getStatus()}. reason: "  . $e->getMessage()
+            )
+                ->setActionStatus(ActionStatus::FAILURE)
+                ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getId());
+
+            throw $e;
+        } finally {
+            $this->logModel->log($log);
         }
-
-        if (!($context->isAdmin() || $this->taskModel->isUserAssignedToTask($context->getId(), $dto->getId()))) {
-            throw new AccessingNonAuthorizedResourceException(line: __LINE__);
-        }
-
-        if ($dto->getStatus() == TaskStatus::SUBMITTED) {
-            throw new UpdatingTaskStatusToSubmittedException(line: __LINE__);
-        }
-
-        if ($this->subtaskModel->taskHasActiveSubtask($dto->getId()) && $dto->getStatus() == TaskStatus::FINISHED) {
-            throw new TaskHasActiveSubtasksException($dto->getId(), line: __LINE__);
-        }
-
-        $affected = $this->taskModel->updateTaskStatus($dto);
-
-        return TaskDTO::fromArray($affected);
     }
 
-    public function addTaskCategory(AddAndRemoveTaskCategory $dto): CategoryAdditionResponseDTO
+    public function addTaskCategory(AddAndRemoveTaskCategory $dto, AuthorizationContext $context): CategoryAdditionResponseDTO
     {
-        if (!$this->taskModel->existsById($dto->getTaskId())) {
-            throw new AccessingNonExistentResourceException($dto->getTaskId(), 'tasks', line: __LINE__);
+        $logA = LogDTO::builder()->setResourceType(ResourceType::TASK)
+            ->setTimestamp(new DateTimeImmutable('now'))->setUserId($context->getId());
+        $logB = LogDTO::builder()->setResourceType(ResourceType::CATEGORY)
+            ->setTimestamp(new DateTimeImmutable('now'))->setUserId($context->getId());
+
+        try {
+            if (!$this->taskModel->existsById($dto->getTaskId())) {
+                throw new AccessingNonExistentResourceException($dto->getTaskId(), 'tasks', line: __LINE__);
+            }
+            if (!$this->categoryModel->existsById($dto->getCategoryId())) {
+                throw new AccessingNonExistentResourceException($dto->getCategoryId(), 'categories', line: __LINE__);
+            }
+            if ($this->categoryModel->taskHasCategory($dto->getTaskId(), $dto->getCategoryId())) {
+                throw new TaskCategoryExistsException($dto->getTaskId(), $dto->getCategoryId(), line: __LINE__);
+            }
+            $created = CategoryAdditionResponseDTO::fromArray($this->taskModel->addTaskCategory($dto));
+
+            $logA->setDescription(
+                "Added task {$dto->getTaskId()} to category {$dto->getCategoryId()}"
+            )
+                ->setActionStatus(ActionStatus::SUCCESS)
+                ->setResourceId($dto->getTaskId());
+
+            $logB->setDescription(
+                "Added task {$dto->getTaskId()} to category {$dto->getCategoryId()}"
+            )
+                ->setActionStatus(ActionStatus::SUCCESS)
+                ->setResourceId($dto->getCategoryId());
+
+            return $created;
+        } catch (\Exception $e) {
+            $logA->setDescription(
+                "Failed to add task {$dto->getTaskId()} to category {$dto->getCategoryId()}. reason: "  . $e->getMessage()
+            )
+                ->setActionStatus(ActionStatus::FAILURE)
+                ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getTaskId());
+
+            $logB->setDescription(
+                "Failed to add task {$dto->getTaskId()} to category {$dto->getCategoryId()}. reason: "  . $e->getMessage()
+            )
+                ->setActionStatus(ActionStatus::FAILURE)
+                ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getCategoryId());
+
+            throw $e;
+        } finally {
+            $this->logModel->log($logA);
+            $this->logModel->log($logB);
         }
-
-        if (!$this->categoryModel->existsById($dto->getCategoryId())) {
-            throw new AccessingNonExistentResourceException($dto->getCategoryId(), 'categories', line: __LINE__);
-        }
-
-        if ($this->categoryModel->taskHasCategory($dto->getTaskId(), $dto->getCategoryId())) {
-            throw new TaskCategoryExistsException($dto->getTaskId(), $dto->getCategoryId()  ,line: __LINE__);
-        }
-
-        $created = $this->taskModel->addTaskCategory($dto);
-
-        return CategoryAdditionResponseDTO::fromArray($created);
     }
 
-    public function removeTaskCategory(AddAndRemoveTaskCategory $dto): void
+    public function removeTaskCategory(AddAndRemoveTaskCategory $dto, AuthorizationContext $context): void
     {
-        if (!$this->taskModel->taskCategoryExists($dto)) {
-            throw new TaskCategoryDoesNotExistException($dto->getTaskId(), $dto->getCategoryId(), line: __LINE__);
-        }
+        $logA = LogDTO::builder()->setResourceType(ResourceType::TASK)
+            ->setTimestamp(new DateTimeImmutable('now'))->setUserId($context->getId());
+        $logB = LogDTO::builder()->setResourceType(ResourceType::CATEGORY)
+            ->setTimestamp(new DateTimeImmutable('now'))->setUserId($context->getId());
 
-        $this->taskModel->removeTaskCategory($dto);
+        try {
+            if (!$this->taskModel->taskCategoryExists($dto)) {
+                throw new TaskCategoryDoesNotExistException($dto->getTaskId(), $dto->getCategoryId(), line: __LINE__);
+            }
+
+            $this->taskModel->removeTaskCategory($dto);
+
+            $logA->setDescription(
+                "Removed task {$dto->getTaskId()} from category {$dto->getCategoryId()}"
+            )
+                ->setActionStatus(ActionStatus::SUCCESS)
+                ->setResourceId($dto->getTaskId());
+
+            $logB->setDescription(
+                "Removed task {$dto->getTaskId()} from category {$dto->getCategoryId()}"
+            )
+                ->setActionStatus(ActionStatus::SUCCESS)
+                ->setResourceId($dto->getCategoryId());
+
+        } catch (\Exception $e) {
+            $logA->setDescription(
+                "Failed to remove task {$dto->getTaskId()} from category {$dto->getCategoryId()}. reason: "  . $e->getMessage()
+            )
+                ->setActionStatus(ActionStatus::FAILURE)
+                ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getTaskId());
+
+            $logB->setDescription(
+                "Failed to remove task {$dto->getTaskId()} from category {$dto->getCategoryId()}. reason: "  . $e->getMessage()
+            )
+                ->setActionStatus(ActionStatus::FAILURE)
+                ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getCategoryId());
+
+            throw $e;
+        } finally {
+            $this->logModel->log($logA);
+        }
     }
 }

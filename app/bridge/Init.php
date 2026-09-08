@@ -58,10 +58,10 @@ class Init
 
         // Create Services
         $srvCategory = new CategoryService($catModel, $taskModel, $logModel);
-        $srvComment = new CommentService($comModel, $userModel, $taskModel);
-        $srvSubtask = new SubTaskService($subModel, $taskModel);
-        $srvTask = new TaskService($taskModel, $userModel, $catModel, $subModel);
-        $srvUser = new UserService($userModel, $taskModel, $jwt, $handle);
+        $srvComment = new CommentService($comModel, $userModel, $taskModel, $logModel);
+        $srvSubtask = new SubTaskService($subModel, $taskModel, $logModel);
+        $srvTask = new TaskService($taskModel, $userModel, $catModel, $subModel, $logModel);
+        $srvUser = new UserService($userModel, $taskModel, $jwt, $handle, $logModel);
 
         // Feed these models to controllers
         $catCtl = new CategoryController($srvCategory);

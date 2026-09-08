@@ -80,19 +80,19 @@ class Router
                 return $this->categoryController->createCategory($data, $context);
             }, true, true],
             'PATCH /categories/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->categoryController->updateCategory($data);
+                return $this->categoryController->updateCategory($data, $context);
             }, true, true],
             'DELETE /categories/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->categoryController->deleteCategory($data);
+                return $this->categoryController->deleteCategory($data, $context);
             }, true, true],
             'GET /categories?query' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->categoryController->searchCategory($data);
+                return $this->categoryController->searchCategory($data, $context);
             }, true, true],
             'GET /categories' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->categoryController->getAllCategories();
+                return $this->categoryController->getAllCategories($context);
             }, true, true],
             'GET /categories/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->categoryController->getCategoryById($data);
+                return $this->categoryController->getCategoryById($data, $context);
             }, true, true],
 
             // Comment routes
@@ -112,7 +112,7 @@ class Router
                 return $this->commentController->getTaskComments($data, $context);
             }, true, false],
             'GET /comments' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->commentController->getAllComments($data);
+                return $this->commentController->getAllComments($context);
             }, true, true],
             'GET /comments/{id}' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->commentController->getCommentById($data, $context);
@@ -120,16 +120,16 @@ class Router
 
             // Subtask routes
             'POST /tasks/{task_id}/subtasks' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->subTaskController->createSubtask($data);
+                return $this->subTaskController->createSubtask($data, $context);
             }, true, true],
             'DELETE /subtasks/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->subTaskController->deleteSubtask($data);
+                return $this->subTaskController->deleteSubtask($data, $context);
             }, true, true],
             'GET /subtasks/{id}' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->subTaskController->getSubtaskById($data, $context);
             }, true, true],
             'GET /subtasks' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->subTaskController->getAllSubtasks($data);
+                return $this->subTaskController->getAllSubtasks($context);
             }, true, true],
             'GET /tasks/{task_id}/subtasks' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->subTaskController->getTaskSubtasks($data, $context);
@@ -138,45 +138,45 @@ class Router
                 return $this->subTaskController->updateSubtaskStatus($data, $context);
             }, true, false],
             'PATCH /subtasks/{id}:update_title' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->subTaskController->updateSubtaskTitle($data);
+                return $this->subTaskController->updateSubtaskTitle($data, $context);
             }, true, true],
             'GET /subtasks?query' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->subTaskController->searchSubtasks($data);
+                return $this->subTaskController->searchSubtasks($data, $context);
             }, true, true],
 
             // Task routes
             'POST /tasks' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->taskController->createTask($data);
+                return $this->taskController->createTask($data, $context);
             }, true, true],
             'DELETE /tasks/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->taskController->deleteTask($data);
+                return $this->taskController->deleteTask($data, $context);
             }, true, true],
             'GET /tasks/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->taskController->getTaskById($data, $context);
             }, true, false],
             'GET /tasks' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->taskController->getAllTasks();
+                return $this->taskController->getAllTasks($context);
             }, true, true],
             'PATCH /tasks/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->taskController->updateTask($data);
+                return $this->taskController->updateTask($data, $context);
             }, true, true],
             'GET /tasks?query' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->taskController->searchTasks($data);
+                return $this->taskController->searchTasks($data, $context);
             }, true, true],
             'POST /tasks/{task_id}:assign_to_user' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->taskController->assignTaskToUser($data);
+                return $this->taskController->assignTaskToUser($data, $context);
             }, true, true],
             'DELETE /tasks/{task_id}:discharge_user' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->taskController->dischargeTaskFromUser($data);
+                return $this->taskController->dischargeTaskFromUser($data, $context);
             }, true, true],
             'PATCH /tasks/{id}:update_status' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->taskController->updateTaskStatus($data, $context);
             }, true, false],
             'POST /tasks/{task_id}/categories' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->taskController->addTaskCategory($data);
+                return $this->taskController->addTaskCategory($data, $context);
             }, true, true],
             'DELETE /tasks/{task_id}/categories' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->taskController->removeTaskCategory($data);
+                return $this->taskController->removeTaskCategory($data, $context);
             }, true, true],
             'GET /tasks/{id}/categories' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->categoryController->getTaskCategories($data, $context);
@@ -190,10 +190,10 @@ class Router
                 return $this->userController->getUserById($data, $context);
             }, true, false],
             'GET /users' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->userController->getAllUsers();
+                return $this->userController->getAllUsers($context);
             }, true, true],
             'GET /users?query' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->userController->searchUsers($data);
+                return $this->userController->searchUsers($data, $context);
             }, true, true],
             'PATCH /users/{id}:update_username' => [function (array $data, AuthorizationContext $context): Response {
                 return $this->userController->updateUsername($data, $context);

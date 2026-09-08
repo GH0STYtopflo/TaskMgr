@@ -29,11 +29,11 @@ class SubtaskController
      * @param array $data
      * @return Response
      */
-    public function createSubtask(array $data): Response
+    public function createSubtask(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = CreateSubTaskDto::fromArray($data);
-            $response = $this->subtaskService->createSubtask($dto);
+            $response = $this->subtaskService->createSubtask($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -51,11 +51,11 @@ class SubtaskController
      * @param array $data
      * @return Response
      */
-    public function deleteSubtask(array $data): Response
+    public function deleteSubtask(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindSubtaskById::fromArray($data);
-            $this->subtaskService->deleteSubtask($dto);
+            $this->subtaskService->deleteSubtask($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -87,10 +87,10 @@ class SubtaskController
      *
      * @return Response
      */
-    public function getAllSubtasks(): Response
+    public function getAllSubtasks(AuthorizationContext $context): Response
     {
         try {
-            $response = $this->subtaskService->getAllSubtasks();
+            $response = $this->subtaskService->getAllSubtasks($context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -142,11 +142,11 @@ class SubtaskController
      * @param array $data
      * @return Response
      */
-    public function updateSubtaskTitle(array $data): Response
+    public function updateSubtaskTitle(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = UpdateSubtaskTitleDTO::fromArray($data);
-            $response = $this->subtaskService->updateSubtaskTitle($dto);
+            $response = $this->subtaskService->updateSubtaskTitle($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -160,11 +160,11 @@ class SubtaskController
      * @param array $data
      * @return Response
      */
-    public function searchSubtasks(array $data): Response
+    public function searchSubtasks(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = SearchSubtaskDto::fromArray($data);
-            $response = $this->subtaskService->searchSubtasks($dto);
+            $response = $this->subtaskService->searchSubtasks($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }

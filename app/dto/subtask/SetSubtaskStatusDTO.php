@@ -51,7 +51,7 @@ class SetSubtaskStatusDTO extends DTO
     public function toArray(): array
     {
         $array = parent::toArray();
-        $array['title'] = null;
+        $array['new_title'] = null;
 
         return $array;
     }

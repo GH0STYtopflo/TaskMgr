@@ -117,7 +117,7 @@ class UserController
      *
      * @return Response
      */
-    public function getAllUsers(): Response
+    public function getAllUsers(AuthorizationContext $context): Response
     {
         try {
             $response = $this->userService->getAllUsers();
@@ -134,7 +134,7 @@ class UserController
      * @param array $data
      * @return Response
      */
-    public function searchUsers(array $data): Response
+    public function searchUsers(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = SearchUserDto::fromArray($data);

@@ -142,10 +142,10 @@ class CommentController
      *
      * @return Response
      */
-    public function getAllComments(): Response
+    public function getAllComments(AuthorizationContext $context): Response
     {
         try {
-            $response = $this->commentService->getAllComments();
+            $response = $this->commentService->getAllComments($context);
         } catch (DatabaseException $e) {
             return $e->createErrResponse();
         }

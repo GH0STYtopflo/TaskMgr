@@ -48,11 +48,11 @@ class CategoryController
      * @param array $data
      * @return Response
      */
-    public function updateCategory(array $data): Response
+    public function updateCategory(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = UpdateCategoryDTO::fromArray($data);
-            $response = $this->categoryService->updateCategory($dto);
+            $response = $this->categoryService->updateCategory($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -66,11 +66,11 @@ class CategoryController
      * @param array $data
      * @return Response
      */
-    public function deleteCategory(array $data): Response
+    public function deleteCategory(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindCategoryByIdDTO::fromArray($data);
-            $this->categoryService->deleteCategory($dto);
+            $this->categoryService->deleteCategory($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -84,11 +84,11 @@ class CategoryController
      * @param array $data
      * @return Response
      */
-    public function searchCategory(array $data): Response
+    public function searchCategory(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = SearchCategoryDTO::fromArray($data);
-            $response = $this->categoryService->searchCategory($dto);
+            $response = $this->categoryService->searchCategory($dto, $context);
         } catch (MissingParamException $e) {
             return $e->createErrResponse();
         }
@@ -101,10 +101,10 @@ class CategoryController
      *
      * @return Response
      */
-    public function getAllCategories(): Response
+    public function getAllCategories(AuthorizationContext $context): Response
     {
         try {
-            $response = $this->categoryService->getAllCategories();
+            $response = $this->categoryService->getAllCategories($context);
         } catch (DatabaseException $e) {
             return $e->createErrResponse();
         }
@@ -118,11 +118,11 @@ class CategoryController
      * @param array $data
      * @return Response
      */
-    public function getCategoryById(array $data): Response
+    public function getCategoryById(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = FindCategoryByIdDTO::fromArray($data);
-            $response = $this->categoryService->getCategoryById($dto);
+            $response = $this->categoryService->getCategoryById($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
