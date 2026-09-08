@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS comments (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     body VARCHAR NOT NULL,
     submission_time TIMESTAMPTZ NOT NULL DEFAULT now(),
-    user_id BIGINT REFERENCES users(id) NOT NULL,
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
     task_id BIGINT REFERENCES tasks(id) ON DELETE CASCADE NOT NULL
 );
 
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS sub_tasks (
 );
 
 CREATE TABLE IF NOT EXISTS user_tasks (
-    user_id BIGINT REFERENCES users(id),
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     task_id BIGINT REFERENCES tasks(id) ON DELETE CASCADE,
 
     CONSTRAINT pk_user_tasks PRIMARY KEY (task_id, user_id)
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS token_black_list (
 
 CREATE TABLE IF NOT EXISTS action_logs (
     resource_id BIGINT NULL,
-    user_id BIGINT NOT NULL references users(id),
+    user_id BIGINT NOT NULL,
     resource_type RESOURCE_TYPE NOT NULL,
     description VARCHAR NOT NULL,
     action_status ACTION_STATUS NOT NULL,

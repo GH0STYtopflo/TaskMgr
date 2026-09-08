@@ -105,7 +105,8 @@ class UserService
         } catch (Exception $e) {
             $log->setActionStatus(ActionStatus::FAILURE)
                 ->setUserId(-1)
-                ->setResourceId((isset($user) && $e instanceof AccessingNonExistentResourceException) ? null : $user->getId());
+                ->setResourceId((!isset($user) || $e instanceof AccessingNonExistentResourceException) ? null : $user->getId())
+                ->setDescription("User {$dto->getUsername()} failed to log in. reason: " . $e->getMessage());
 
             throw $e;
         } finally {
@@ -149,7 +150,7 @@ class UserService
 
             $log->setActionStatus(ActionStatus::SUCCESS)
                 ->setResourceId($context->getId())
-                ->setDescription("User {$context->getId()} logged out}");
+                ->setDescription("User {$context->getId()} logged out");
         } catch (Exception $e) {
             $log->setActionStatus(ActionStatus::FAILURE)
                 ->setUserId($context->getId())

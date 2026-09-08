@@ -224,12 +224,12 @@ class TaskService
         }
     }
 
-    public function assignTaskToUser(AssignAndDischargeTaskDTO $dto): TaskAssignmentResponseDTO
+    public function assignTaskToUser(AssignAndDischargeTaskDTO $dto, AuthorizationContext $context): TaskAssignmentResponseDTO
     {
         $logA = LogDTO::builder()->setResourceType(ResourceType::TASK)
-            ->setTimestamp(new DateTimeImmutable('now'));
+            ->setTimestamp(new DateTimeImmutable('now'))->setUserId($context->getId());
         $logB = LogDTO::builder()->setResourceType(ResourceType::USER)
-            ->setTimestamp(new DateTimeImmutable('now'));
+            ->setTimestamp(new DateTimeImmutable('now'))->setUserId($context->getId());
 
         try {
             if (!$this->taskModel->existsById($dto->getTaskId())) {
@@ -330,7 +330,7 @@ class TaskService
             $affected = TaskDTO::fromArray($this->taskModel->updateTaskStatus($dto));
 
             $log->setDescription(
-                "Updated task status of task {$dto->getId()} to {$dto->getStatus()}"
+                "Updated task status of task {$dto->getId()} to {$dto->getStatus()->value}"
             )
                 ->setActionStatus(ActionStatus::SUCCESS)
                 ->setResourceId($dto->getId());
@@ -338,7 +338,7 @@ class TaskService
             return $affected;
         } catch (\Exception $e) {
             $log->setDescription(
-                "Failed to update task status of task {$dto->getId()} to {$dto->getStatus()}. reason: "  . $e->getMessage()
+                "Failed to update task status of task {$dto->getId()} to {$dto->getStatus()->value}. reason: "  . $e->getMessage()
             )
                 ->setActionStatus(ActionStatus::FAILURE)
                 ->setResourceId($e instanceof AccessingNonExistentResourceException ? null : $dto->getId());

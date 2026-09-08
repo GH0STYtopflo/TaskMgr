@@ -120,7 +120,7 @@ class UserController
     public function getAllUsers(AuthorizationContext $context): Response
     {
         try {
-            $response = $this->userService->getAllUsers();
+            $response = $this->userService->getAllUsers($context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
@@ -138,7 +138,7 @@ class UserController
     {
         try {
             $dto = SearchUserDto::fromArray($data);
-            $response = $this->userService->searchUsers($dto);
+            $response = $this->userService->searchUsers($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }
