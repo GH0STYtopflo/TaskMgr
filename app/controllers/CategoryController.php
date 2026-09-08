@@ -30,11 +30,11 @@ class CategoryController
      * @param array $data
      * @return Response
      */
-    public function createCategory(array $data): Response
+    public function createCategory(array $data, AuthorizationContext $context): Response
     {
         try {
             $dto = CreateCategoryDTO::fromArray($data);
-            $response = $this->categoryService->createCategory($dto);
+            $response = $this->categoryService->createCategory($dto, $context);
         } catch (ExceptionTemplate $e) {
             return $e->createErrResponse();
         }

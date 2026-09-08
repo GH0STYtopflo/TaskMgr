@@ -17,6 +17,7 @@ use ghosty\taskmgr\dto\task\FindTaskByIdDTO;
 use ghosty\taskmgr\exceptions\AccessingNonAuthorizedResourceException;
 use ghosty\taskmgr\exceptions\AccessingNonExistentResourceException;
 use ghosty\taskmgr\exceptions\CategoryExistsException;
+use ghosty\taskmgr\exceptions\ExceptionTemplate;
 use ghosty\taskmgr\models\CategoryModel;
 use ghosty\taskmgr\models\LogModel;
 use ghosty\taskmgr\models\TaskModel;
@@ -50,13 +51,13 @@ class CategoryService
 
             $log->setDescription(
                 "User " . $context->getId() . " created category " . $created->getTitle()
-            )->setResourceId($created->getId());
+            )->setResourceId($created->getId())->setActionStatus(ActionStatus::SUCCESS);
 
             return $created;
-        } catch (\Exception $e) {
+        } catch (ExceptionTemplate $e) {
             $log->setDescription(
                 "User " . $context->getId() . " failed to create category " . $dto->getTitle()
-            );
+            )->setActionStatus(ActionStatus::FAILURE);
             throw $e;
         } finally {
             $this->logModel->log($log);

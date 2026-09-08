@@ -75,15 +75,13 @@ CREATE TABLE IF NOT EXISTS token_black_list (
     token VARCHAR NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS actions_logs (
+CREATE TABLE IF NOT EXISTS action_logs (
     resource_id BIGINT NULL,
-    user_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL references users(id),
     resource_type RESOURCE_TYPE NOT NULL,
     description VARCHAR NOT NULL,
     action_status ACTION_STATUS NOT NULL,
-    timestamp TIMESTAMPTZ default now(),
-
-    constraint no_resource_check check ((resource_id IS NULL AND resource_type = 'NA') OR (resource_id IS NOT NULL AND resource_type != 'NA'))
+    timestamp TIMESTAMPTZ default now()
 );
 
 CREATE INDEX idx_tasks_priority ON tasks(priority);

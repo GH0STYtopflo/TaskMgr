@@ -77,7 +77,7 @@ class Router
 
             // Category routes
             'POST /categories' => [function (array $data, ?AuthorizationContext $context): Response {
-                return $this->categoryController->createCategory($data);
+                return $this->categoryController->createCategory($data, $context);
             }, true, true],
             'PATCH /categories/{id}' => [function (array $data, ?AuthorizationContext $context): Response {
                 return $this->categoryController->updateCategory($data);

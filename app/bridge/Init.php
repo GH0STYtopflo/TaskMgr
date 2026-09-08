@@ -30,12 +30,12 @@ class Init
         // Get connection to database (env read from dotenv)
         try {
             $conn = Connection::getConnection(
-                getenv('TMG_DBMS'),
-                getenv('TMG_HOST'),
-                getenv('TMG_PORT'),
-                getenv('POSTGRES_DB'),
-                getenv('POSTGRES_USER'),
-                getenv('POSTGRES_PASSWORD'),
+                'pgsql',
+                'localhost',
+                '5432',
+                'taskmgr',
+                'postgres',
+                'postgres',
                 [3 => 2, 19 => 2, 20 => false]
             );
         } catch (\Exception $e) {
@@ -54,7 +54,7 @@ class Init
         $logModel = new LogModel($handle);
 
         // JWT handle
-        $jwt = new JWT(getenv('TMG_TOKEN_EXP'), getenv('TMG_SECRET'));
+        $jwt = new JWT(200000, 'random_secret_that_will_be_read_from_dotenv_file_just_making_this_long_enough');
 
         // Create Services
         $srvCategory = new CategoryService($catModel, $taskModel, $logModel);

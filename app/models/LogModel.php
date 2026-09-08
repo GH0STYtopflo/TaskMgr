@@ -22,14 +22,16 @@ class LogModel
         $data = $data->toArray();
         $data['timestamp'] = $data['timestamp']->format(DATE_ATOM);
         $data['resource_type'] = $data['resource_type']->value;
-        $data['result'] = $data['result']->value;
+        $data['action_status'] = $data['action_status']->value;
 
         try {
             $this->handle->preparedStatement(
-                "INSERT INTO action_logs (resource_id, resource_type, description, result, timestamp)
-                    VALUES (:resource_id, :resource_type, :description, :result, :timestamp)",
+                "INSERT INTO action_logs (resource_id, user_id, resource_type, description, action_status, timestamp)
+                    VALUES (:resource_id, :user_id, :resource_type, :description, :action_status, :timestamp)",
                 $data);
-        } catch (\PDOException) {}
+        } catch (\PDOException $e) {
+            error_log($e->getMessage());
+        }
     }
 
     public function searchLogs(SearchLogDTO $data): array
