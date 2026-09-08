@@ -13,6 +13,7 @@ use ghosty\taskmgr\database\Connection;
 use ghosty\taskmgr\database\DBHandle;
 use ghosty\taskmgr\models\CategoryModel;
 use ghosty\taskmgr\models\CommentModel;
+use ghosty\taskmgr\models\LogModel;
 use ghosty\taskmgr\models\SubTaskModel;
 use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\models\UserModel;
@@ -50,12 +51,13 @@ class Init
         $subModel = new SubTaskModel($handle);
         $taskModel = new TaskModel($handle);
         $userModel = new UserModel($handle);
+        $logModel = new LogModel($handle);
 
         // JWT handle
         $jwt = new JWT(getenv('TMG_TOKEN_EXP'), getenv('TMG_SECRET'));
 
         // Create Services
-        $srvCategory = new CategoryService($catModel, $taskModel);
+        $srvCategory = new CategoryService($catModel, $taskModel, $logModel);
         $srvComment = new CommentService($comModel, $userModel, $taskModel);
         $srvSubtask = new SubTaskService($subModel, $taskModel);
         $srvTask = new TaskService($taskModel, $userModel, $catModel, $subModel);

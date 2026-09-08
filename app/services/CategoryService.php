@@ -2,6 +2,7 @@
 
 namespace ghosty\taskmgr\services;
 
+use DateTimeImmutable;
 use ghosty\taskmgr\database\custom_types\ActionStatus;
 use ghosty\taskmgr\database\custom_types\ResourceType;
 use ghosty\taskmgr\dto\AuthorizationContext;
@@ -35,16 +36,31 @@ class CategoryService
 
     public function createCategory(CreateCategoryDTO $dto, AuthorizationContext $context): CategoryDTO
     {
-        if ($this->categoryModel->existsByTitle($dto->getTitle())) {
-            throw new CategoryExistsException(
-                $dto->getTitle(),
-                line: __LINE__,
+        $log = LogDTO::builder()->setResourceType(ResourceType::CATEGORY)->setUserId($context->getId())
+            ->setTimestamp(new DateTimeImmutable('now'));
+
+        try {
+            if ($this->categoryModel->existsByTitle($dto->getTitle())) {
+                throw new CategoryExistsException(
+                    $dto->getTitle(),
+                    line: __LINE__,
+                );
+            }
+            $created = CategoryDTO::fromArray($this->categoryModel->insert($dto));
+
+            $log->setDescription(
+                "User " . $context->getId() . " created category " . $created->getTitle()
+            )->setResourceId($created->getId());
+
+            return $created;
+        } catch (\Exception $e) {
+            $log->setDescription(
+                "User " . $context->getId() . " failed to create category " . $dto->getTitle()
             );
+            throw $e;
+        } finally {
+            $this->logModel->log($log);
         }
-
-        $created = CategoryDTO::fromArray($this->categoryModel->insert($dto));
-
-        return $created;
     }
 
     public function updateCategory(UpdateCategoryDTO $dto): CategoryDTO
