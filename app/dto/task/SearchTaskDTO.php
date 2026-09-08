@@ -125,62 +125,62 @@ class SearchTaskDTO extends DTO
         }
     }
 
-    public function getTitle(): string
+    public function getTitle(): ?string
     {
         return $this->title;
     }
 
-    public function getPriorityHigher(): int
+    public function getPriorityHigher(): ?int
     {
         return $this->priority_higher;
     }
 
-    public function getPriorityLower(): int
+    public function getPriorityLower(): ?int
     {
         return $this->priority_lower;
     }
 
-    public function getDeadlineBefore(): string
+    public function getDeadlineBefore(): ?DateTimeImmutable
     {
         return $this->deadline_before;
     }
 
-    public function getDeadlineAfter(): string
+    public function getDeadlineAfter(): ?DateTimeImmutable
     {
         return $this->deadline_after;
     }
 
-    public function getStatus(): TaskStatus
+    public function getStatus(): ?TaskStatus
     {
         return $this->status;
     }
 
-    public function getCreatedBefore(): string
+    public function getCreatedBefore(): ?DateTimeImmutable
     {
         return $this->created_before;
     }
 
-    public function getCreatedAfter(): string
+    public function getCreatedAfter(): ?DateTimeImmutable
     {
         return $this->created_after;
     }
 
-    public function getUpdatedBefore(): string
+    public function getUpdatedBefore(): ?DateTimeImmutable
     {
         return $this->updated_before;
     }
 
-    public function getUpdatedAfter(): string
+    public function getUpdatedAfter(): ?DateTimeImmutable
     {
         return $this->updated_after;
     }
 
-    public function getPage(): int
+    public function getPage(): ?int
     {
         return $this->page;
     }
 
-    public function getLimit(): int
+    public function getLimit(): ?int
     {
         return $this->limit;
     }

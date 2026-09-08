@@ -13,6 +13,7 @@ use ghosty\taskmgr\database\Connection;
 use ghosty\taskmgr\database\DBHandle;
 use ghosty\taskmgr\models\CategoryModel;
 use ghosty\taskmgr\models\CommentModel;
+use ghosty\taskmgr\models\LogModel;
 use ghosty\taskmgr\models\SubTaskModel;
 use ghosty\taskmgr\models\TaskModel;
 use ghosty\taskmgr\models\UserModel;
@@ -50,16 +51,17 @@ class Init
         $subModel = new SubTaskModel($handle);
         $taskModel = new TaskModel($handle);
         $userModel = new UserModel($handle);
+        $logModel = new LogModel($handle);
 
         // JWT handle
         $jwt = new JWT(getenv('TMG_TOKEN_EXP'), getenv('TMG_SECRET'));
 
         // Create Services
-        $srvCategory = new CategoryService($catModel, $taskModel);
-        $srvComment = new CommentService($comModel, $userModel, $taskModel);
-        $srvSubtask = new SubTaskService($subModel, $taskModel);
-        $srvTask = new TaskService($taskModel, $userModel, $catModel, $subModel);
-        $srvUser = new UserService($userModel, $taskModel, $jwt, $handle);
+        $srvCategory = new CategoryService($catModel, $taskModel, $logModel);
+        $srvComment = new CommentService($comModel, $userModel, $taskModel, $logModel);
+        $srvSubtask = new SubTaskService($subModel, $taskModel, $logModel);
+        $srvTask = new TaskService($taskModel, $userModel, $catModel, $subModel, $logModel);
+        $srvUser = new UserService($userModel, $taskModel, $jwt, $handle, $logModel);
 
         // Feed these models to controllers
         $catCtl = new CategoryController($srvCategory);
@@ -70,6 +72,8 @@ class Init
 
         // Auth
         $authentication = new Authentication($userModel, $jwt, $handle);
+
+        error_log('Initialization completed');
 
         // Finally return a router obj
         return new Router($authentication, $catCtl, $userCtl, $taskCtl, $subCtl, $comCtl);
